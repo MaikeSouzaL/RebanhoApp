@@ -113,9 +113,9 @@ export function LancamentosPage() {
       {rows.length ? (
         <Card className="divide-y divide-border p-0">
           {rows.map((r) => (
-            <div key={r.item.id} className="flex items-center gap-3 p-3.5">
+            <div key={r.item.id} className="flex items-center gap-2.5 p-3.5">
               {r.kind === 'entrada' ? (
-                <span className="flex size-10 items-center justify-center rounded-xl bg-success/12 text-success">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success/12 text-success">
                   {r.item.membroId ? (
                     <span className="text-[11px] font-bold">{initials(membroMap.get(r.item.membroId)?.nome ?? '?')}</span>
                   ) : (
@@ -127,34 +127,36 @@ export function LancamentosPage() {
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{titulo(r)}</p>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <FormaTag forma={r.item.forma} />
-                  <span className="text-xs text-muted-foreground">{formatDate(r.data)}</span>
-                </div>
+                <FormaTag forma={r.item.forma} className="mt-0.5" />
               </div>
-              <p
-                className={cn(
-                  'tabular text-sm font-semibold',
-                  r.kind === 'entrada' ? 'text-success' : 'text-[color:var(--chart-3)]',
-                )}
-              >
-                {r.kind === 'entrada' ? '' : '− '}
-                {formatBRL(r.item.valor)}
-              </p>
-              <button
-                onClick={() => navigate(r.kind === 'entrada' ? `/editar/entrada/${r.item.id}` : `/editar/despesa/${r.item.id}`)}
-                className="rounded-lg p-1.5 text-muted-foreground active:bg-accent"
-                aria-label="Editar"
-              >
-                <Pencil className="size-4" />
-              </button>
-              <button
-                onClick={() => setARemover(r)}
-                className="rounded-lg p-1.5 text-muted-foreground active:bg-accent"
-                aria-label="Excluir"
-              >
-                <Trash2 className="size-4" />
-              </button>
+              <div className="shrink-0 pl-1 text-right">
+                <p
+                  className={cn(
+                    'tabular text-sm font-semibold',
+                    r.kind === 'entrada' ? 'text-success' : 'text-[color:var(--chart-3)]',
+                  )}
+                >
+                  {r.kind === 'entrada' ? '' : '− '}
+                  {formatBRL(r.item.valor)}
+                </p>
+                <p className="text-xs text-muted-foreground">{formatDate(r.data)}</p>
+              </div>
+              <div className="flex shrink-0 items-center">
+                <button
+                  onClick={() => navigate(r.kind === 'entrada' ? `/editar/entrada/${r.item.id}` : `/editar/despesa/${r.item.id}`)}
+                  className="rounded-lg p-1.5 text-muted-foreground active:bg-accent"
+                  aria-label="Editar"
+                >
+                  <Pencil className="size-4" />
+                </button>
+                <button
+                  onClick={() => setARemover(r)}
+                  className="rounded-lg p-1.5 text-muted-foreground active:bg-accent"
+                  aria-label="Excluir"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
             </div>
           ))}
         </Card>
