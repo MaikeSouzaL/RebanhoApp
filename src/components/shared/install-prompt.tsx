@@ -8,7 +8,10 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+// Dispensa é só da SESSÃO atual (sessionStorage) — reaparece ao reabrir o app.
 const DISMISS_KEY = 'rebanho-install-dismissed'
+// Instalado é permanente (localStorage) — some de vez após instalar.
+const INSTALLED_KEY = 'rebanho-installed'
 
 function isStandalone() {
   return (
@@ -20,11 +23,16 @@ function isIOS() {
   const ua = navigator.userAgent
   return /iphone|ipad|ipod/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua)
 }
+function jaInstalado() {
+  return isStandalone() || localStorage.getItem(INSTALLED_KEY) === '1'
+}
 
 /**
  * Convite de instalação do PWA.
- * - Android/Chrome/Edge: usa o evento beforeinstallprompt (botão "Instalar").
- * - iOS/Safari: mostra instruções (Compartilhar → Adicionar à Tela de Início).
+ * - Sempre aparece enquanto o app NÃO estiver instalado.
+ * - Fechar no "×" esconde apenas na sessão atual; reaparece ao reabrir o app.
+ * - Android/Chrome/Edge: botão "Instalar agora" (beforeinstallprompt).
+ * - iOS/Safari: instruções (Compartilhar → Adicionar à Tela de Início).
  */
 export function InstallPrompt() {
   const [evt, setEvt] = useState<BeforeInstallPromptEvent | null>(null)
@@ -32,7 +40,7 @@ export function InstallPrompt() {
   const [ios, setIos] = useState(false)
 
   useEffect(() => {
-    if (isStandalone() || localStorage.getItem(DISMISS_KEY)) return
+    if (jaInstalado() || sessionStorage.getItem(DISMISS_KEY)) return
 
     if (isIOS()) {
       setIos(true)
@@ -46,7 +54,7 @@ export function InstallPrompt() {
       setVisible(true)
     }
     const onInstalled = () => {
-      localStorage.setItem(DISMISS_KEY, '1')
+      localStorage.setItem(INSTALLED_KEY, '1')
       setVisible(false)
     }
     window.addEventListener('beforeinstallprompt', onPrompt)
@@ -60,13 +68,14 @@ export function InstallPrompt() {
   if (!visible) return null
 
   function dismiss() {
-    localStorage.setItem(DISMISS_KEY, '1')
+    sessionStorage.setItem(DISMISS_KEY, '1')
     setVisible(false)
   }
   async function install() {
     if (!evt) return
     await evt.prompt()
-    await evt.userChoice
+    const choice = await evt.userChoice
+    if (choice.outcome === 'accepted') localStorage.setItem(INSTALLED_KEY, '1')
     setVisible(false)
   }
 
@@ -88,7 +97,7 @@ export function InstallPrompt() {
               <p className="mt-0.5 text-xs text-muted-foreground">Acesse offline, direto da tela inicial do celular.</p>
             )}
           </div>
-          <button onClick={dismiss} className="rounded-lg p-1 text-muted-foreground" aria-label="Dispensar">
+          <button onClick={dismiss} className="rounded-lg p-1 text-muted-foreground" aria-label="Agora não">
             <X className="size-4" />
           </button>
         </div>
