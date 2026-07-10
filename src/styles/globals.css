@@ -1,0 +1,301 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@import '@fontsource-variable/fraunces/index.css';
+@import '@fontsource-variable/plus-jakarta-sans/index.css';
+
+/* Modo escuro por classe .dark no <html> */
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Rebanho de Jesus Cristo — Design System
+  Cores extraídas da logo (Bom Pastor): verde do anel, azul do manto,
+  chama pentecostal (amarelo→laranja→vermelho) e o creme do cordeiro.
+  Light-first. NUNCA usar cores cruas nas telas — só tokens semânticos.
+*/
+:root {
+  --radius: 1rem;
+
+  --background: #f7f4ec; /* creme / pergaminho */
+  --foreground: #17231c; /* tinta verde-carvão */
+
+  --card: #ffffff;
+  --card-foreground: #17231c;
+  --popover: #ffffff;
+  --popover-foreground: #17231c;
+
+  --primary: #1e7d3a; /* Verde Rebanho — ação */
+  --primary-foreground: #f6fbf4;
+
+  --secondary: #ece5d6; /* areia quente (superfície) */
+  --secondary-foreground: #3b4a40;
+
+  --muted: #efe9dc;
+  --muted-foreground: #5c6b60;
+
+  --accent: #e7efe7; /* tinta verde suave */
+  --accent-foreground: #1e3a2a;
+
+  --destructive: #d8382a; /* vermelho-chama — atrasado/déficit */
+  --destructive-foreground: #fff6f4;
+
+  --success: #1e7d3a;
+  --success-foreground: #f6fbf4;
+
+  --warning: #e8992b; /* âmbar — vencendo */
+  --warning-foreground: #2a1c05;
+
+  --info: #3b79b0; /* Azul Pastor */
+  --info-foreground: #f2f8fc;
+
+  --border: #e6e1d5;
+  --input: #e6e1d5;
+  --ring: #2fa24b;
+
+  /* Marca */
+  --brand-green: #2fa24b; /* verde vivo do anel */
+  --brand-blue: #3b79b0; /* azul do manto */
+  --brand-gold: #f6c136; /* topo da chama */
+  --leather: #8a5a2b; /* cajado/sandálias */
+  --flame-from: #f6c136;
+  --flame-via: #ef8a2b;
+  --flame-to: #e24329;
+
+  /* Gráficos */
+  --chart-1: #2fa24b;
+  --chart-2: #3b79b0;
+  --chart-3: #ef8a2b;
+  --chart-4: #f6c136;
+  --chart-5: #e24329;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17231c;
+}
+
+.dark {
+  --background: #0f1712;
+  --foreground: #f1efe6;
+
+  --card: #16211a;
+  --card-foreground: #f1efe6;
+  --popover: #16211a;
+  --popover-foreground: #f1efe6;
+
+  --primary: #37b457;
+  --primary-foreground: #06140b;
+
+  --secondary: #1e2a22;
+  --secondary-foreground: #d8e2d9;
+
+  --muted: #1b261f;
+  --muted-foreground: #9db0a2;
+
+  --accent: #1e2a22;
+  --accent-foreground: #e4ece5;
+
+  --destructive: #f26355;
+  --destructive-foreground: #1a0906;
+
+  --success: #37b457;
+  --success-foreground: #06140b;
+
+  --warning: #f0ae4a;
+  --warning-foreground: #1a1204;
+
+  --info: #63a6d8;
+  --info-foreground: #04121c;
+
+  --border: #26332b;
+  --input: #26332b;
+  --ring: #37b457;
+
+  --brand-green: #37b457;
+  --brand-blue: #63a6d8;
+  --brand-gold: #f6c136;
+  --leather: #b07d43;
+  --flame-from: #f6c136;
+  --flame-via: #ef8a2b;
+  --flame-to: #e24329;
+
+  --chart-1: #37b457;
+  --chart-2: #63a6d8;
+  --chart-3: #ef8a2b;
+  --chart-4: #f6c136;
+  --chart-5: #e24329;
+
+  --sidebar: #16211a;
+  --sidebar-foreground: #f1efe6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand-green: var(--brand-green);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-gold: var(--brand-gold);
+  --color-leather: var(--leather);
+  --color-flame-from: var(--flame-from);
+  --color-flame-via: var(--flame-via);
+  --color-flame-to: var(--flame-to);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', ui-serif, Georgia, 'Times New Roman', serif;
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 45%, transparent);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+
+  /* Números financeiros alinhados */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+}
+
+@layer utilities {
+  /* Texto em gradiente da chama pentecostal */
+  .text-flame {
+    background-image: linear-gradient(
+      100deg,
+      var(--flame-from),
+      var(--flame-via),
+      var(--flame-to)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-flame {
+    background-image: linear-gradient(135deg, var(--flame-from), var(--flame-via), var(--flame-to));
+  }
+
+  /* Brilho radial quente atrás de heros/saldo */
+  .bg-flame-glow {
+    background:
+      radial-gradient(120% 90% at 85% -10%, color-mix(in oklab, var(--flame-via) 22%, transparent), transparent 60%),
+      radial-gradient(90% 80% at -10% 110%, color-mix(in oklab, var(--brand-green) 16%, transparent), transparent 55%);
+  }
+
+  .bg-brand-mesh {
+    background:
+      radial-gradient(90% 70% at 100% 0%, color-mix(in oklab, var(--brand-green) 12%, transparent), transparent 60%),
+      radial-gradient(80% 60% at 0% 100%, color-mix(in oklab, var(--brand-blue) 10%, transparent), transparent 55%);
+  }
+
+  .glass {
+    background-color: color-mix(in oklab, var(--card) 72%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  }
+
+  .ring-brand {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--brand-green) 30%, transparent);
+  }
+
+  /* Sombra quente sutil para cards */
+  .shadow-warm {
+    box-shadow:
+      0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent),
+      0 8px 24px -12px color-mix(in oklab, var(--leather) 22%, transparent);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Áreas seguras (notch) para PWA */
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top), 0.5rem);
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+  .h-safe-bottom {
+    height: env(safe-area-inset-bottom);
+  }
+}
+
+/* Impressão do relatório (A4) */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    box-shadow: none !important;
+  }
+}
