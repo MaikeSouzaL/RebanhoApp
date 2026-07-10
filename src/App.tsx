@@ -3,6 +3,7 @@ import { RequireAuth, RoleGuard } from '@/app/guards'
 import { AppShell } from '@/components/layout/app-shell'
 import { Toaster } from '@/components/ui/sonner'
 import { useSession } from '@/store/session'
+import { InstallPrompt } from '@/components/shared/install-prompt'
 import { LockScreen } from '@/features/auth/lock-screen'
 import { LoginPage } from '@/features/auth/login-page'
 import { HomeRouter } from '@/features/home/home-router'
@@ -163,6 +164,7 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <InstallPrompt />
       <Toaster />
     </>
   )

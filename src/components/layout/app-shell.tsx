@@ -5,7 +5,6 @@ import { TopBar } from './top-bar'
 import { BottomNav } from './bottom-nav'
 import { MoreSheet } from './more-sheet'
 import { QuickAdd } from './quick-add'
-import { InstallPrompt } from '@/components/shared/install-prompt'
 import { useSession } from '@/store/session'
 
 export function AppShell() {
@@ -36,7 +35,6 @@ export function AppShell() {
 
       {showFab && <QuickAdd />}
       <BottomNav />
-      <InstallPrompt />
       <MoreSheet open={menuOpen} onOpenChange={setMenuOpen} />
     </div>
   )

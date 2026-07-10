@@ -24,8 +24,9 @@ impressão / PDF) para enviar ao **Pastor Presidente**, mensal ou trimestralment
 - **Relatórios:** pré-visualização **A4** de prestação de contas + **Imprimir / Salvar PDF** +
   histórico. Períodos **mensal / trimestral / personalizado**.
 - **Membros, Fundos** (com metas de campanha), **Style Guide** (`/style`) e **Configurações**.
-- **PWA de verdade:** instalável, service worker, **offline**, ícones gerados da logo, tema
-  claro/escuro.
+- **PWA de verdade:** **convite de instalação** na tela (Android/Chrome com botão "Instalar agora";
+  iOS/Safari com instruções "Compartilhar → Adicionar à Tela de Início"), service worker, **offline**,
+  ícones gerados da logo, tema claro/escuro.
 
 ## 🧱 Stack
 
