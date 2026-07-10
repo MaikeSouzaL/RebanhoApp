@@ -174,12 +174,12 @@ export function DashboardPage() {
               centerValue={formatBRL(m.totalEnt, { compact: true })}
               centerLabel="total"
             />
-            <ul className="space-y-2.5">
+            <ul className="min-w-0 space-y-2.5">
               {donutData.map((d) => (
                 <li key={d.name} className="flex items-center gap-2">
-                  <span className="size-2.5 rounded-full" style={{ background: d.color }} />
-                  <span className="flex-1 text-sm text-muted-foreground">{d.name}</span>
-                  <span className="tabular text-sm font-semibold">{formatBRL(d.value, { compact: true })}</span>
+                  <span className="size-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{d.name}</span>
+                  <span className="tabular shrink-0 text-sm font-semibold">{formatBRL(d.value, { compact: true })}</span>
                 </li>
               ))}
             </ul>

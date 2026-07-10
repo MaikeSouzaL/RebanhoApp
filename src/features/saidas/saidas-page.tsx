@@ -76,12 +76,12 @@ export function SaidasPage() {
         {donut.length > 0 && (
           <div className="mt-2 grid grid-cols-[140px_1fr] items-center gap-3">
             <DonutChart data={donut} height={150} />
-            <ul className="space-y-2">
+            <ul className="min-w-0 space-y-2">
               {donut.map((d) => (
                 <li key={d.name} className="flex items-center gap-2 text-xs">
-                  <span className="size-2.5 rounded-full" style={{ background: d.color }} />
-                  <span className="flex-1 truncate text-muted-foreground">{d.name}</span>
-                  <span className="tabular font-semibold">{formatBRL(d.value, { compact: true })}</span>
+                  <span className="size-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
+                  <span className="min-w-0 flex-1 truncate text-muted-foreground">{d.name}</span>
+                  <span className="tabular shrink-0 font-semibold">{formatBRL(d.value, { compact: true })}</span>
                 </li>
               ))}
             </ul>
