@@ -5,7 +5,7 @@ import type { Database } from './types'
  * "Banco" mock. Persiste em localStorage para sobreviver a reloads (F5).
  * A versão na chave invalida dados antigos quando o schema muda.
  */
-const STORAGE_KEY = 'rebanho-db-v1'
+const STORAGE_KEY = 'rebanho-db-v2'
 
 function load(): Database | null {
   try {
@@ -35,6 +35,22 @@ export function resetDb() {
       ;(db[k] as unknown[]).splice(0, (db[k] as unknown[]).length, ...(fresh[k] as unknown[]))
     } else {
       ;(db as unknown as Record<string, unknown>)[k] = fresh[k]
+    }
+  })
+  saveDb()
+}
+
+/** Substitui todo o conteúdo do banco por um backup importado. */
+export function importDb(data: Database) {
+  ;(Object.keys(db) as (keyof Database)[]).forEach((k) => {
+    if (Array.isArray(db[k])) {
+      ;(db[k] as unknown[]).splice(
+        0,
+        (db[k] as unknown[]).length,
+        ...((data[k] as unknown[] | undefined) ?? []),
+      )
+    } else if (data[k] != null) {
+      ;(db as unknown as Record<string, unknown>)[k] = data[k]
     }
   })
   saveDb()

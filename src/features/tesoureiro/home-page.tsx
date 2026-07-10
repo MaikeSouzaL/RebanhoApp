@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowUpRight,
   CalendarClock,
+  Church,
   HandCoins,
   HeartHandshake,
   ListChecks,
@@ -108,6 +109,18 @@ export function TesoureiroHomePage() {
             </Link>
           ))}
         </div>
+        <Link
+          to="/culto"
+          className="bg-flame-glow mt-3 flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-warm active:scale-[0.99]"
+        >
+          <span className="flex size-11 items-center justify-center rounded-xl bg-flame text-white">
+            <Church className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">Fechamento de culto</span>
+            <span className="block text-xs text-muted-foreground">Conte a oferta e registre de uma vez</span>
+          </span>
+        </Link>
       </div>
 
       {/* Pendências */}

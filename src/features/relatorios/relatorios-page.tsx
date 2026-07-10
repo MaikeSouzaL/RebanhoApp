@@ -1,7 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import { addDays, parseISO } from 'date-fns'
-import { FileText, History, Printer } from 'lucide-react'
+import { FileText, History, Mail, Printer, Share2 } from 'lucide-react'
+import { shareText, whatsappUrl, mailtoUrl } from '@/lib/share'
 import { useData } from '@/store/data'
 import { useSession } from '@/store/session'
 import {
@@ -77,6 +78,14 @@ export function RelatoriosPage() {
     documentTitle: `Prestacao-de-contas-${period.inicio}`,
   })
 
+  const resumoTexto = `*Prestação de contas — ${period.label}*\n${config.nome}\n\n• Entradas: ${formatBRL(data.totalEntradas)}\n• Saídas: ${formatBRL(data.totalSaidas)}\n• Resultado: ${formatBRL(data.resultado)}\n• Saldo em caixa: ${formatBRL(data.saldoFinal)}`
+
+  async function compartilhar() {
+    const r = await shareText(`Prestação de contas — ${period.label}`, resumoTexto)
+    if (r === 'copied') toast.success('Resumo copiado para a área de transferência.')
+    else if (r === 'error') toast.error('Não foi possível compartilhar.')
+  }
+
   function gerar() {
     addRelatorio({
       titulo: `Prestação de contas — ${period.label}`,
@@ -121,11 +130,24 @@ export function RelatoriosPage() {
         </div>
       </Card>
 
-      <div className="flex gap-2">
-        <Button className="flex-1" variant="flame" onClick={gerar}>
-          <Printer />
-          Imprimir / Salvar PDF
+      <Button className="w-full" variant="flame" onClick={gerar}>
+        <Printer />
+        Imprimir / Salvar PDF
+      </Button>
+      <div className="grid grid-cols-3 gap-2">
+        <Button variant="outline" onClick={compartilhar}>
+          <Share2 /> Resumo
         </Button>
+        <a href={whatsappUrl(resumoTexto)} target="_blank" rel="noreferrer">
+          <Button variant="outline" className="w-full">
+            WhatsApp
+          </Button>
+        </a>
+        <a href={mailtoUrl(`Prestação de contas — ${period.label}`, resumoTexto)}>
+          <Button variant="outline" className="w-full">
+            <Mail /> E-mail
+          </Button>
+        </a>
       </div>
 
       {/* Pré-visualização A4 */}

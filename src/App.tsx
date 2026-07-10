@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { RequireAuth, RoleGuard } from '@/app/guards'
 import { AppShell } from '@/components/layout/app-shell'
 import { Toaster } from '@/components/ui/sonner'
+import { useSession } from '@/store/session'
+import { LockScreen } from '@/features/auth/lock-screen'
 import { LoginPage } from '@/features/auth/login-page'
 import { HomeRouter } from '@/features/home/home-router'
 import { EntradasPage } from '@/features/entradas/entradas-page'
@@ -10,6 +12,8 @@ import { ContasPage } from '@/features/contas/contas-page'
 import { RelatoriosPage } from '@/features/relatorios/relatorios-page'
 import { MembrosPage } from '@/features/membros/membros-page'
 import { MembroDetalhePage } from '@/features/membros/membro-detalhe-page'
+import { AniversariantesPage } from '@/features/membros/aniversariantes-page'
+import { AtividadePage } from '@/features/atividade/atividade-page'
 import { FundosPage } from '@/features/fundos/fundos-page'
 import { SettingsPage } from '@/features/settings/settings-page'
 import { StyleGuidePage } from '@/features/styleguide/styleguide-page'
@@ -17,11 +21,14 @@ import { LancamentosPage } from '@/features/lancamentos/lancamentos-page'
 import { EntradaFormPage } from '@/features/lancamentos/entrada-form-page'
 import { DespesaFormPage } from '@/features/lancamentos/despesa-form-page'
 import { ContaFormPage } from '@/features/lancamentos/conta-form-page'
+import { CultoPage } from '@/features/tesoureiro/culto-page'
 import { PrestacaoPage } from '@/features/irmao/prestacao-page'
 import { ContribuirPage } from '@/features/irmao/contribuir-page'
 import { MinhaContribuicaoPage } from '@/features/irmao/minha-contribuicao-page'
 
 export default function App() {
+  const locked = useSession((s) => s.locked)
+  if (locked) return <LockScreen />
   return (
     <>
       <Routes>
@@ -71,6 +78,22 @@ export default function App() {
               </RoleGuard>
             }
           />
+          <Route
+            path="aniversariantes"
+            element={
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
+                <AniversariantesPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="atividade"
+            element={
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
+                <AtividadePage />
+              </RoleGuard>
+            }
+          />
 
           {/* Tesoureiro */}
           <Route
@@ -110,6 +133,30 @@ export default function App() {
             element={
               <RoleGuard allow={['tesoureiro']}>
                 <ContaFormPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="culto"
+            element={
+              <RoleGuard allow={['tesoureiro']}>
+                <CultoPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="editar/entrada/:id"
+            element={
+              <RoleGuard allow={['tesoureiro']}>
+                <EntradaFormPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="editar/despesa/:id"
+            element={
+              <RoleGuard allow={['tesoureiro']}>
+                <DespesaFormPage />
               </RoleGuard>
             }
           />

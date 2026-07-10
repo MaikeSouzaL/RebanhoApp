@@ -54,6 +54,20 @@ Design system documentado em [`STYLEGUIDE.md`](STYLEGUIDE.md) e na página viva 
 - **Minha conta:** histórico da **própria** contribuição, total no ano e **recibo/comprovante anual
   em PDF**. Privacidade garantida por rotas protegidas por papel (`RoleGuard`).
 
+## ✨ Recursos extras (v0.2 — tudo frontend)
+
+- **Comprovante por foto** — anexa a imagem da nota à despesa (redimensionada e guardada localmente).
+- **Editar lançamentos** — além de excluir, edita entradas e saídas reusando os formulários.
+- **Fechamento de culto** — contador de cédulas/moedas + Pix, que gera os lançamentos de uma vez.
+- **Orçamento mensal por categoria** — definido nas Configurações e acompanhado (realizado × previsto,
+  com alerta de estouro) no painel do pastor.
+- **Aniversariantes do mês** — lista com idade e atalho de WhatsApp para parabenizar.
+- **Atividade (auditoria)** — histórico de quem registrou/editou/excluiu/pagou/gerou o quê.
+- **Compartilhar** — resumo do relatório e do recibo via Web Share / WhatsApp / e-mail.
+- **Backup** — exportar/importar todos os dados em JSON (leva de um aparelho a outro sem backend).
+- **Acessibilidade** — escala de texto (Normal / Grande / Maior) para irmãos idosos.
+- **PIN de acesso** — trava opcional com PIN de 4 dígitos ao abrir o app.
+
 ## 🚀 Como rodar
 
 ```bash

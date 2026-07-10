@@ -1,8 +1,10 @@
 import { create } from 'zustand'
 import { services } from '@/data/services'
 import type {
+  AuditEntry,
   ConfigIgreja,
   ContaPagar,
+  Database,
   Entrada,
   Fundo,
   Membro,
@@ -17,17 +19,21 @@ interface DataState {
   saidas: Saida[]
   contasPagar: ContaPagar[]
   relatorios: Relatorio[]
+  auditoria: AuditEntry[]
   config: ConfigIgreja
 
   addEntrada: (input: Omit<Entrada, 'id' | 'competencia'>) => void
+  updateEntrada: (id: string, patch: Partial<Entrada>) => void
   removeEntrada: (id: string) => void
   addSaida: (input: Omit<Saida, 'id' | 'competencia'>) => void
+  updateSaida: (id: string, patch: Partial<Saida>) => void
   removeSaida: (id: string) => void
   addConta: (input: Omit<ContaPagar, 'id'>) => void
   updateConta: (id: string, patch: Partial<ContaPagar>) => void
   pagarConta: (id: string, dataPagamento: string) => void
   saveConfig: (patch: Partial<ConfigIgreja>) => void
   addRelatorio: (input: Omit<Relatorio, 'id' | 'geradoEm'>) => void
+  importBackup: (data: Database) => void
   resetDados: () => void
 }
 
@@ -40,6 +46,7 @@ function refresh() {
     saidas: s.saidas,
     contasPagar: s.contasPagar,
     relatorios: s.relatorios,
+    auditoria: s.auditoria,
     config: s.config,
   }
 }
@@ -51,12 +58,20 @@ export const useData = create<DataState>((set) => ({
     services.addEntrada(input)
     set(refresh())
   },
+  updateEntrada: (id, patch) => {
+    services.updateEntrada(id, patch)
+    set(refresh())
+  },
   removeEntrada: (id) => {
     services.removeEntrada(id)
     set(refresh())
   },
   addSaida: (input) => {
     services.addSaida(input)
+    set(refresh())
+  },
+  updateSaida: (id, patch) => {
+    services.updateSaida(id, patch)
     set(refresh())
   },
   removeSaida: (id) => {
@@ -81,6 +96,10 @@ export const useData = create<DataState>((set) => ({
   },
   addRelatorio: (input) => {
     services.addRelatorio(input)
+    set(refresh())
+  },
+  importBackup: (data) => {
+    services.importBackup(data)
     set(refresh())
   },
   resetDados: () => {

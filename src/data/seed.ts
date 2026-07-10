@@ -107,6 +107,8 @@ export function createDatabase(): Database {
     telefone: `(69) 9${randInt(8000, 9999)}-${randInt(1000, 9999)}`,
     ministerio: pick(MINISTERIOS),
     batizadoEm: iso(randInt(2005, 2023), randInt(1, 12), randInt(1, 28)),
+    // alguns aniversariantes no mês corrente para a tela de aniversários
+    nascimento: iso(randInt(1955, 2005), i < 6 ? nowM : randInt(1, 12), randInt(1, 28)),
     ativo: chance(0.92),
   }))
   const ativos = membros.filter((m) => m.ativo)
@@ -309,6 +311,18 @@ export function createDatabase(): Database {
     telefone: '(69) 3421-0000',
     pixTipo: 'CNPJ',
     pixChave: '12.345.678/0001-90',
+    orcamento: {
+      aluguel: 2500,
+      energia: 700,
+      agua: 200,
+      internet: 160,
+      prebenda: 3000,
+      som: 500,
+      materiais: 400,
+      assistencia: 1000,
+      missoes: 1200,
+      manutencao: 600,
+    },
   }
 
   const relatorios = [
@@ -332,5 +346,6 @@ export function createDatabase(): Database {
     saidas,
     contasPagar,
     relatorios,
+    auditoria: [],
   }
 }

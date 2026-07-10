@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import {
+  Cake,
   ChevronRight,
   HandCoins,
+  History,
   LogOut,
   Moon,
   Palette,
@@ -25,10 +27,12 @@ const CONFIG: Link = { to: '/config', label: 'Configurações', desc: 'Dados da 
 const STYLE: Link = { to: '/style', label: 'Style Guide', desc: 'Identidade visual do app', icon: Palette }
 const MEMBROS: Link = { to: '/membros', label: 'Membros', desc: 'Contribuintes e histórico', icon: Users }
 const CONTRIBUIR: Link = { to: '/contribuir', label: 'Contribuir', desc: 'Chave Pix e QR Code', icon: HandCoins }
+const ANIVERSARIOS: Link = { to: '/aniversariantes', label: 'Aniversariantes', desc: 'Do mês', icon: Cake }
+const ATIVIDADE: Link = { to: '/atividade', label: 'Atividade', desc: 'Histórico de ações', icon: History }
 
 function linksForRole(papel: Papel | undefined): Link[] {
   if (papel === 'irmao') return [CONTRIBUIR, FUNDOS, CONFIG, STYLE]
-  return [MEMBROS, FUNDOS, CONFIG, STYLE]
+  return [MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG, STYLE]
 }
 
 export function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {

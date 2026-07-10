@@ -13,7 +13,8 @@ export function AppShell() {
   const location = useLocation()
   const papel = useSession((s) => s.user?.papel)
   // O FAB de ação rápida é do tesoureiro, mas não nas telas de formulário (redundante).
-  const showFab = papel === 'tesoureiro' && !location.pathname.startsWith('/novo')
+  const isForm = /^\/(novo|editar|culto)/.test(location.pathname)
+  const showFab = papel === 'tesoureiro' && !isForm
 
   return (
     <div className="min-h-dvh bg-background">

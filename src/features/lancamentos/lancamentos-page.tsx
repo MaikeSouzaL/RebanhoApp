@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { ArrowUpRight, Download, ListChecks, Search, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowUpRight, Download, ListChecks, Pencil, Search, Trash2 } from 'lucide-react'
 import { useData } from '@/store/data'
 import { useSession } from '@/store/session'
 import { filterEntradas, filterSaidas } from '@/lib/report'
@@ -37,6 +38,7 @@ type Filtro = 'todos' | 'entradas' | 'saidas'
 export function LancamentosPage() {
   const { entradas, saidas, membros, removeEntrada, removeSaida } = useData()
   const { period } = useSession()
+  const navigate = useNavigate()
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [busca, setBusca] = useState('')
   const [aRemover, setARemover] = useState<Row | null>(null)
@@ -139,6 +141,13 @@ export function LancamentosPage() {
                 {r.kind === 'entrada' ? '' : '− '}
                 {formatBRL(r.item.valor)}
               </p>
+              <button
+                onClick={() => navigate(r.kind === 'entrada' ? `/editar/entrada/${r.item.id}` : `/editar/despesa/${r.item.id}`)}
+                className="rounded-lg p-1.5 text-muted-foreground active:bg-accent"
+                aria-label="Editar"
+              >
+                <Pencil className="size-4" />
+              </button>
               <button
                 onClick={() => setARemover(r)}
                 className="rounded-lg p-1.5 text-muted-foreground active:bg-accent"

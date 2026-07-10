@@ -42,6 +42,7 @@ export interface Membro {
   email?: string
   ministerio?: string
   batizadoEm?: string
+  nascimento?: string // 'YYYY-MM-DD' (aniversário)
   ativo: boolean
 }
 
@@ -77,6 +78,7 @@ export interface Saida {
   forma: FormaPagamento
   fundoId: string
   comprovante?: boolean
+  comprovanteUrl?: string // foto do comprovante (data URL)
   obs?: string
 }
 
@@ -116,6 +118,19 @@ export interface ConfigIgreja {
   telefone: string
   pixTipo: string
   pixChave: string
+  orcamento: Partial<Record<CategoriaDespesaId, number>> // orçamento mensal por categoria
+}
+
+export type AcaoAudit = 'criou' | 'editou' | 'excluiu' | 'pagou' | 'gerou' | 'importou'
+
+export interface AuditEntry {
+  id: string
+  ts: string // ISO datetime
+  usuario: string
+  acao: AcaoAudit
+  entidade: string // ex.: 'dízimo', 'despesa', 'conta'
+  descricao: string
+  valor?: number
 }
 
 export interface Database {
@@ -127,6 +142,7 @@ export interface Database {
   saidas: Saida[]
   contasPagar: ContaPagar[]
   relatorios: Relatorio[]
+  auditoria: AuditEntry[]
 }
 
 // Metadados das categorias de despesa (rótulo + ícone lucide + cor).

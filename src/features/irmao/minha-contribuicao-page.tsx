@@ -3,7 +3,9 @@ import { useReactToPrint } from 'react-to-print'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
-import { Download, HeartHandshake } from 'lucide-react'
+import { Download, HeartHandshake, Share2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { shareText } from '@/lib/share'
 import { useData } from '@/store/data'
 import { useSession } from '@/store/session'
 import { TIPO_ENTRADA_LABEL } from '@/data/categorias'
@@ -100,10 +102,24 @@ export function MinhaContribuicaoPage() {
       </div>
 
       {/* Recibo */}
-      <Button variant="flame" size="lg" className="w-full" onClick={() => imprimir()}>
-        <Download />
-        Baixar recibo de {ano} (PDF)
-      </Button>
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <Button variant="flame" size="lg" onClick={() => imprimir()}>
+          <Download />
+          Baixar recibo de {ano} (PDF)
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          aria-label="Compartilhar"
+          onClick={async () => {
+            const txt = `Minha contribuição em ${ano} — ${config.nome}\nDízimos: ${formatBRL(dados.totalDizimo)}\nOfertas: ${formatBRL(dados.totalOferta)}\nTotal: ${formatBRL(dados.totalAno)}`
+            const r = await shareText(`Minha contribuição ${ano}`, txt)
+            if (r === 'copied') toast.success('Resumo copiado.')
+          }}
+        >
+          <Share2 />
+        </Button>
+      </div>
 
       {/* Constância */}
       <Card className="p-5">

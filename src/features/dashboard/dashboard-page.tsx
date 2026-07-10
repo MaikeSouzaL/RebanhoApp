@@ -19,6 +19,7 @@ import {
   filterEntradas,
   filterSaidas,
   fluxoMensal,
+  monthPeriod,
   previousPeriod,
   saldoAcumulado,
   saldoPorFundo,
@@ -26,6 +27,7 @@ import {
   statusConta,
   sum,
 } from '@/lib/report'
+import type { CategoriaDespesaId } from '@/data/types'
 import { CATEGORIA_MAP } from '@/data/categorias'
 import { formatBRL, formatDate, formatPercent } from '@/lib/format'
 import { Card } from '@/components/ui/card'
@@ -39,7 +41,7 @@ import { CashflowChart, DonutChart, Sparkline } from '@/components/charts/charts
 import { cn } from '@/lib/utils'
 
 export function DashboardPage() {
-  const { entradas, saidas, contasPagar, fundos } = useData()
+  const { entradas, saidas, contasPagar, fundos, config } = useData()
   const { user, period } = useSession()
 
   const m = useMemo(() => {
@@ -66,6 +68,19 @@ export function DashboardPage() {
       .sort((a, b) => (a.vencimento < b.vencimento ? -1 : 1))
       .slice(0, 4)
 
+    // Orçamento do mês corrente (realizado × previsto)
+    const mesAtual = monthPeriod(new Date())
+    const realMes = new Map(saidasPorCategoria(filterSaidas(saidas, mesAtual)).map((c) => [c.categoria, c.total]))
+    const orcamento = Object.entries(config.orcamento ?? {})
+      .map(([cat, previsto]) => ({
+        categoria: cat as CategoriaDespesaId,
+        previsto: previsto ?? 0,
+        realizado: realMes.get(cat as CategoriaDespesaId) ?? 0,
+      }))
+      .filter((o) => o.previsto > 0)
+      .sort((a, b) => b.realizado / b.previsto - a.realizado / a.previsto)
+      .slice(0, 5)
+
     return {
       totalEnt,
       totalSai,
@@ -83,8 +98,9 @@ export function DashboardPage() {
       resumo,
       fundosSaldo,
       proximas,
+      orcamento,
     }
-  }, [entradas, saidas, contasPagar, fundos, period])
+  }, [entradas, saidas, contasPagar, fundos, config, period])
 
   const donutData = [
     { name: 'Dízimos', value: m.porTipo.dizimo, color: 'var(--chart-1)' },
@@ -232,6 +248,38 @@ export function DashboardPage() {
           )}
         </ul>
       </Card>
+
+      {/* Orçamento do mês */}
+      {m.orcamento.length > 0 && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-base font-semibold">Orçamento do mês</h2>
+            <Link to="/config" className="text-xs font-semibold text-primary">
+              Ajustar
+            </Link>
+          </div>
+          <ul className="mt-3 space-y-3">
+            {m.orcamento.map((o) => {
+              const ratio = o.realizado / o.previsto
+              const cor = ratio > 1 ? 'var(--destructive)' : ratio >= 0.85 ? 'var(--warning)' : 'var(--chart-1)'
+              return (
+                <li key={o.categoria}>
+                  <div className="flex items-baseline justify-between gap-2 text-sm">
+                    <span className="truncate font-medium">{CATEGORIA_MAP[o.categoria].label}</span>
+                    <span className="tabular shrink-0 text-xs">
+                      <span className="font-semibold" style={{ color: cor }}>{formatBRL(o.realizado, { compact: true })}</span>
+                      <span className="text-muted-foreground"> / {formatBRL(o.previsto, { compact: true })}</span>
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(100, ratio * 100)}%`, backgroundColor: cor }} />
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </Card>
+      )}
 
       {/* Contas a pagar próximas */}
       <Card className="p-5">

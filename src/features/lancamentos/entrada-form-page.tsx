@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useData } from '@/store/data'
@@ -24,19 +24,31 @@ const FORMAS: FormaPagamento[] = ['pix', 'dinheiro', 'cartao', 'transferencia']
 
 const schema = z.object({ valor: z.number().positive('Informe um valor maior que zero.') })
 
-export function EntradaFormPage({ tipo }: { tipo: TipoEntrada }) {
-  const { fundos, addEntrada } = useData()
+export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
+  const { entradas, fundos, addEntrada, updateEntrada } = useData()
   const navigate = useNavigate()
+  const { id } = useParams()
+  const existing = id ? entradas.find((e) => e.id === id) : undefined
+  const tipo: TipoEntrada = existing?.tipo ?? tipoProp ?? 'dizimo'
   const isDizimo = tipo === 'dizimo'
+  const editando = !!existing
 
-  const [valor, setValor] = useState(0)
-  const [membroId, setMembroId] = useState<string | null>(isDizimo ? null : null)
-  const [subtipo, setSubtipo] = useState(SUBTIPOS_OFERTA[0]!)
-  const [fundoId, setFundoId] = useState('f-geral')
-  const [data, setData] = useState(isoDayOf(new Date()))
-  const [forma, setForma] = useState<FormaPagamento>('pix')
-  const [obs, setObs] = useState('')
+  const [valor, setValor] = useState(existing?.valor ?? 0)
+  const [membroId, setMembroId] = useState<string | null>(existing?.membroId ?? null)
+  const [subtipo, setSubtipo] = useState(existing?.subtipo ?? SUBTIPOS_OFERTA[0]!)
+  const [fundoId, setFundoId] = useState(existing?.fundoId ?? 'f-geral')
+  const [data, setData] = useState(existing?.data ?? isoDayOf(new Date()))
+  const [forma, setForma] = useState<FormaPagamento>(existing?.forma ?? 'pix')
+  const [obs, setObs] = useState(existing?.obs ?? '')
   const [erro, setErro] = useState<string>()
+
+  if (id && !existing) {
+    return (
+      <div className="py-16 text-center text-muted-foreground">
+        Lançamento não encontrado.
+      </div>
+    )
+  }
 
   function onSubtipoChange(v: string) {
     setSubtipo(v)
@@ -47,47 +59,42 @@ export function EntradaFormPage({ tipo }: { tipo: TipoEntrada }) {
 
   function salvar() {
     const res = schema.safeParse({ valor })
-    if (!res.success) {
-      setErro(res.error.issues[0]?.message)
-      return
-    }
-    addEntrada({
+    if (!res.success) return setErro(res.error.issues[0]?.message)
+    const payload = {
       tipo,
       subtipo: isDizimo ? undefined : subtipo,
       valor,
       data,
       forma,
       fundoId,
-      membroId: membroId,
+      membroId,
       obs: obs.trim() || undefined,
-    })
-    toast.success(isDizimo ? 'Dízimo registrado!' : 'Oferta registrada!')
+    }
+    if (editando) updateEntrada(existing!.id, payload)
+    else addEntrada(payload)
+    toast.success(editando ? 'Lançamento atualizado!' : isDizimo ? 'Dízimo registrado!' : 'Oferta registrada!')
     navigate('/lancamentos')
   }
 
+  const titulo = editando ? 'Editar lançamento' : isDizimo ? 'Registrar dízimo' : 'Registrar oferta'
+
   return (
     <FormShell
-      title={isDizimo ? 'Registrar dízimo' : 'Registrar oferta'}
+      title={titulo}
       subtitle={isDizimo ? 'Contribuição de um membro' : 'Culto, missões, gratidão…'}
       onSubmit={salvar}
-      submitLabel={isDizimo ? 'Salvar dízimo' : 'Salvar oferta'}
+      submitLabel={editando ? 'Salvar alterações' : isDizimo ? 'Salvar dízimo' : 'Salvar oferta'}
     >
       <Field label="Valor" error={erro} htmlFor="valor">
-        <CurrencyInput id="valor" value={valor} onChange={(v) => { setValor(v); setErro(undefined) }} autoFocus />
+        <CurrencyInput id="valor" value={valor} onChange={(v) => { setValor(v); setErro(undefined) }} autoFocus={!editando} />
       </Field>
 
       {!isDizimo && (
         <Field label="Tipo de oferta">
           <Select value={subtipo} onValueChange={onSubtipoChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {SUBTIPOS_OFERTA.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
+              {SUBTIPOS_OFERTA.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
         </Field>
@@ -103,15 +110,9 @@ export function EntradaFormPage({ tipo }: { tipo: TipoEntrada }) {
         </Field>
         <Field label="Forma">
           <Select value={forma} onValueChange={(v) => setForma(v as FormaPagamento)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {FORMAS.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {FORMA_LABEL[f]}
-                </SelectItem>
-              ))}
+              {FORMAS.map((f) => <SelectItem key={f} value={f}>{FORMA_LABEL[f]}</SelectItem>)}
             </SelectContent>
           </Select>
         </Field>
@@ -119,15 +120,9 @@ export function EntradaFormPage({ tipo }: { tipo: TipoEntrada }) {
 
       <Field label="Fundo">
         <Select value={fundoId} onValueChange={setFundoId}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            {fundos.map((f) => (
-              <SelectItem key={f.id} value={f.id}>
-                {f.nome}
-              </SelectItem>
-            ))}
+            {fundos.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
           </SelectContent>
         </Select>
       </Field>

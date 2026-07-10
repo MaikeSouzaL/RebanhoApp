@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  Church,
   HandCoins,
   HeartHandshake,
   Plus,
@@ -16,6 +17,7 @@ const OPCOES: { to: string; label: string; desc: string; icon: LucideIcon; color
   { to: '/novo/oferta', label: 'Oferta', desc: 'Culto, missões, gratidão…', icon: HeartHandshake, color: 'var(--chart-2)' },
   { to: '/novo/despesa', label: 'Despesa', desc: 'Um gasto já pago', icon: ShoppingCart, color: 'var(--chart-3)' },
   { to: '/novo/conta', label: 'Conta a pagar', desc: 'Compromisso com vencimento', icon: Receipt, color: 'var(--warning)' },
+  { to: '/culto', label: 'Fechamento de culto', desc: 'Conte a oferta e registre', icon: Church, color: 'var(--flame-via)' },
 ]
 
 export function QuickAdd() {
