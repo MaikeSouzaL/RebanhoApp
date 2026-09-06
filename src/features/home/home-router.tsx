@@ -5,7 +5,7 @@ import { IrmaoHomePage } from '@/features/irmao/home-page'
 
 /** A rota "/" mostra a home conforme o papel do usuário. */
 export function HomeRouter() {
-  const papel = useSession((s) => s.user?.papel)
+  const papel = useSession((s) => s.papelAtivo)
   if (papel === 'tesoureiro') return <TesoureiroHomePage />
   if (papel === 'irmao') return <IrmaoHomePage />
   return <DashboardPage />

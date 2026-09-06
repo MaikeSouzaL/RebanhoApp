@@ -10,7 +10,7 @@ import { useSession } from '@/store/session'
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
-  const papel = useSession((s) => s.user?.papel)
+  const papel = useSession((s) => s.papelAtivo)
   // O FAB de ação rápida é do tesoureiro, mas não nas telas de formulário (redundante).
   const isForm = /^\/(novo|editar|culto)/.test(location.pathname)
   const showFab = papel === 'tesoureiro' && !isForm

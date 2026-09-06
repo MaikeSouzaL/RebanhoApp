@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { services } from '@/data/services'
+import { inscrever } from '@/sync/motor'
 import type {
   AuditEntry,
   ConfigIgreja,
@@ -8,11 +9,14 @@ import type {
   Entrada,
   Fundo,
   Membro,
+  Papel,
   Relatorio,
   Saida,
+  Usuario,
 } from '@/data/types'
 
 interface DataState {
+  usuarios: Usuario[]
   membros: Membro[]
   fundos: Fundo[]
   entradas: Entrada[]
@@ -33,6 +37,10 @@ interface DataState {
   pagarConta: (id: string, dataPagamento: string) => void
   saveConfig: (patch: Partial<ConfigIgreja>) => void
   addRelatorio: (input: Omit<Relatorio, 'id' | 'geradoEm'>) => void
+  addMembro: (input: Omit<Membro, 'id'>) => void
+  updateMembro: (id: string, patch: Partial<Membro>) => void
+  definirPapeis: (usuarioId: string, papeis: Papel[], cargo?: string) => void
+  removeUsuario: (id: string) => void
   importBackup: (data: Database) => void
   resetDados: () => void
 }
@@ -40,6 +48,7 @@ interface DataState {
 function refresh() {
   const s = services.snapshot()
   return {
+    usuarios: s.usuarios,
     membros: s.membros,
     fundos: s.fundos,
     entradas: s.entradas,
@@ -98,12 +107,32 @@ export const useData = create<DataState>((set) => ({
     services.addRelatorio(input)
     set(refresh())
   },
+  addMembro: (input) => {
+    services.addMembro(input)
+    set(refresh())
+  },
+  updateMembro: (id, patch) => {
+    services.updateMembro(id, patch)
+    set(refresh())
+  },
+  definirPapeis: (usuarioId, papeis, cargo) => {
+    services.definirPapeis(usuarioId, papeis, cargo)
+    set(refresh())
+  },
+  removeUsuario: (id) => {
+    services.removeUsuario(id)
+    set(refresh())
+  },
   importBackup: (data) => {
     services.importBackup(data)
     set(refresh())
   },
   resetDados: () => {
-    services.reset()
+    void services.reset()
     set(refresh())
   },
 }))
+
+// Alterações que chegam de outro aparelho (ou do carregamento inicial do log)
+// entram por aqui — a tela reage igual a uma edição feita neste celular.
+inscrever(() => useData.setState(refresh()))

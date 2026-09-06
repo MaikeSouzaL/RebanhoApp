@@ -67,7 +67,14 @@ const FONTES: { value: FontScale; label: string }[] = [
 
 export function SettingsPage() {
   const { config, saveConfig, resetDados, importBackup } = useData()
-  const { theme, setTheme } = useSession()
+  const { theme, setTheme, logout } = useSession()
+
+  // Apagar o log encerra a sessão: sem usuários, o app volta ao cadastro.
+  function apagarTudoLocal() {
+    resetDados()
+    logout()
+    toast.success('Dados locais apagados.')
+  }
   const [form, setForm] = useState<ConfigIgreja>(config)
   const [orc, setOrc] = useState<Partial<Record<CategoriaDespesaId, number>>>(config.orcamento ?? {})
   const [fonte, setFonte] = useState<FontScale>(getFontScale())
@@ -258,23 +265,28 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Reset */}
+      {/* Apagar tudo */}
       <Card>
         <CardHeader>
-          <CardTitle>Dados de demonstração</CardTitle>
+          <CardTitle>Apagar dados deste aparelho</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Remove todo o histórico guardado aqui e desconecta a conta. Os dados continuam nos
+            outros aparelhos da igreja — ao entrar de novo com o código, eles voltam.
+          </p>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full">
-                <RotateCcw /> Restaurar dados de exemplo
+              <Button variant="outline" className="w-full text-destructive">
+                <RotateCcw /> Apagar tudo deste aparelho
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Restaurar dados?</DialogTitle>
+                <DialogTitle>Apagar os dados locais?</DialogTitle>
                 <DialogDescription>
-                  Isto substitui todos os lançamentos atuais pelos dados de exemplo. Não pode ser desfeito.
+                  Some tudo o que está guardado neste aparelho e a conta é encerrada. Não pode ser
+                  desfeito aqui, mas nada se perde nos demais aparelhos da igreja.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -282,8 +294,8 @@ export function SettingsPage() {
                   <Button variant="outline">Cancelar</Button>
                 </DialogClose>
                 <DialogClose asChild>
-                  <Button variant="destructive" onClick={() => { resetDados(); toast.success('Dados de exemplo restaurados.') }}>
-                    Restaurar
+                  <Button variant="destructive" onClick={apagarTudoLocal}>
+                    Apagar
                   </Button>
                 </DialogClose>
               </DialogFooter>
@@ -293,7 +305,7 @@ export function SettingsPage() {
       </Card>
 
       <p className="pt-2 text-center text-xs text-muted-foreground">
-        O Rebanho de Jesus Cristo · Gestão financeira — v0.2
+        {config.nome || 'O Rebanho de Jesus Cristo'} · Gestão financeira — v0.2
       </p>
 
       {/* Dialog do PIN */}

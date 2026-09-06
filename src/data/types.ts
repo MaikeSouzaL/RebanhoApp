@@ -30,9 +30,34 @@ export interface Usuario {
   id: string
   nome: string
   email: string
+  /** Papel principal (o "maior" dos papéis) — usado para exibição e crachá. */
   papel: Papel
+  /**
+   * Todos os papéis que o pastor concedeu. Um usuário pode ser pastor E
+   * tesoureiro ao mesmo tempo e alternar entre as duas visões. Sempre tem ao
+   * menos um item; quando ausente, vale `[papel]`.
+   */
+  papeis?: Papel[]
+  /**
+   * Cargo eclesiástico (título): diácono, presbítero, missionária, etc. É só
+   * rótulo — não concede permissão nenhuma, que vem sempre de `papeis`.
+   */
+  cargo?: string
   membroId?: string
-  senha: string // mock
+  /** Hash PBKDF2 da senha. A senha em si nunca sai do dispositivo. */
+  hash?: string
+  /** Sal aleatório usado no hash, único por usuário. */
+  sal?: string
+  /** Chave pública do usuário (JWK em base64url) — valida as assinaturas dele. */
+  pub?: string
+  /**
+   * Chave privada cifrada com a senha do usuário. Viaja junto no cadastro para
+   * que a conta funcione em qualquer aparelho; sem a senha, é ruído.
+   */
+  chaveCifrada?: { ct: string; iv: string; sal: string }
+  criadoEm?: string
+  /** Senha em texto — existe apenas nos dados de demonstração. */
+  senha?: string
 }
 
 export interface Membro {

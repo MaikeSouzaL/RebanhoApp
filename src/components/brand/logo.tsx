@@ -50,11 +50,11 @@ export function Logomark({ className, size = 32 }: { className?: string; size?: 
   )
 }
 
-/** Nome da igreja (wordmark). */
+/** Nome da igreja (wordmark) — usa o emblema real, o mesmo do relatório. */
 export function Wordmark({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
-      <Logomark size={compact ? 30 : 36} />
+      <Emblem size={compact ? 32 : 38} className="ring-1 ring-border" />
       <div className="leading-tight">
         <p className="font-display text-[15px] font-semibold tracking-tight">O Rebanho</p>
         {!compact && (

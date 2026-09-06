@@ -6,6 +6,9 @@ import { useSession } from '@/store/session'
 import { InstallPrompt } from '@/components/shared/install-prompt'
 import { LockScreen } from '@/features/auth/lock-screen'
 import { LoginPage } from '@/features/auth/login-page'
+import { CadastroPage } from '@/features/auth/cadastro-page'
+import { UsuariosPage } from '@/features/usuarios/usuarios-page'
+import { RedePage } from '@/features/rede/rede-page'
 import { HomeRouter } from '@/features/home/home-router'
 import { EntradasPage } from '@/features/entradas/entradas-page'
 import { SaidasPage } from '@/features/saidas/saidas-page'
@@ -34,6 +37,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/cadastro" element={<CadastroPage />} />
         <Route
           element={
             <RequireAuth>
@@ -47,6 +51,7 @@ export default function App() {
           <Route path="contas" element={<ContasPage />} />
           <Route path="fundos" element={<FundosPage />} />
           <Route path="config" element={<SettingsPage />} />
+          <Route path="rede" element={<RedePage />} />
           <Route path="style" element={<StyleGuidePage />} />
 
           {/* Irmãos (transparência) */}
@@ -84,6 +89,14 @@ export default function App() {
             element={
               <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <AniversariantesPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="usuarios"
+            element={
+              <RoleGuard allow={['pastor']}>
+                <UsuariosPage />
               </RoleGuard>
             }
           />

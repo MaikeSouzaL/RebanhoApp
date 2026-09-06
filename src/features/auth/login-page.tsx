@@ -1,37 +1,37 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { LogIn, ShieldCheck, Users, Wallet } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import { Emblem } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useData } from '@/store/data'
 import { useSession } from '@/store/session'
 import { toast } from 'sonner'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { login, loginAs, user } = useSession()
-  const [email, setEmail] = useState('pastor@rebanho.app')
-  const [senha, setSenha] = useState('rebanho123')
+  const { login, user, carregando } = useSession()
+  const config = useData((s) => s.config)
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
   if (user) return <Navigate to="/" replace />
+  if (carregando) return null
 
-
-  function entrar(e: React.FormEvent) {
+  async function entrar(e: React.FormEvent) {
     e.preventDefault()
-    const res = login(email, senha)
+    setEnviando(true)
+    const res = await login(email, senha)
+    setEnviando(false)
     if (res.ok) {
       toast.success('Bem-vindo de volta!')
       navigate('/', { replace: true })
     } else {
       toast.error(res.erro ?? 'Não foi possível entrar.')
     }
-  }
-
-  function demo(papel: 'pastor' | 'tesoureiro' | 'irmao') {
-    loginAs(papel)
-    navigate('/', { replace: true })
   }
 
   return (
@@ -48,11 +48,9 @@ export function LoginPage() {
             <Emblem size={104} />
           </div>
           <h1 className="mt-4 font-display text-[26px] font-semibold leading-tight">
-            O Rebanho de Jesus Cristo
+            {config.nome || 'O Rebanho de Jesus Cristo'}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Igreja Pentecostal · 1990 — Gestão financeira
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Gestão financeira da igreja</p>
         </div>
 
         <form
@@ -67,7 +65,7 @@ export function LoginPage() {
               autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="voce@rebanho.app"
+              placeholder="voce@exemplo.com"
             />
           </div>
           <div className="space-y-1.5">
@@ -81,41 +79,17 @@ export function LoginPage() {
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" size="lg" className="w-full">
+          <Button type="submit" size="lg" className="w-full" disabled={enviando}>
             <LogIn />
-            Entrar
+            {enviando ? 'Entrando…' : 'Entrar'}
           </Button>
         </form>
 
-        <p className="mt-5 mb-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Entrar em demonstração como
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            onClick={() => demo('pastor')}
-            className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-border py-3 text-xs font-semibold text-primary active:scale-[0.99]"
-          >
-            <ShieldCheck className="size-5" />
-            Pastor
-          </button>
-          <button
-            onClick={() => demo('tesoureiro')}
-            className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-border py-3 text-xs font-semibold text-info active:scale-[0.99]"
-          >
-            <Wallet className="size-5" />
-            Tesoureiro
-          </button>
-          <button
-            onClick={() => demo('irmao')}
-            className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-border py-3 text-xs font-semibold text-[color:var(--flame-via)] active:scale-[0.99]"
-          >
-            <Users className="size-5" />
-            Irmão
-          </button>
-        </div>
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Três experiências por papel — cada um vê o que precisa.
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Ainda não tem acesso?{' '}
+          <Link to="/cadastro" className="font-semibold text-primary underline-offset-4 hover:underline">
+            Criar cadastro
+          </Link>
         </p>
       </motion.div>
     </div>
