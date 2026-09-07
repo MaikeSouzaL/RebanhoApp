@@ -16,7 +16,7 @@ import {
   novoSal,
   temCriptografia,
 } from '@/sync/crypto'
-import { guardarChave, lerChave, limparChave } from '@/sync/identidade'
+import { guardarChave, lerChave } from '@/sync/identidade'
 import * as motor from '@/sync/motor'
 
 const USER_KEY = 'rebanho-usuario'
@@ -248,7 +248,16 @@ export const useSession = create<SessionState>((set, get) => ({
 
   login: async (email, senha) => {
     const usuario = db.usuarios.find((u) => emailIgual(u.email, email))
-    if (!usuario) return { ok: false, erro: 'E-mail não encontrado neste aparelho.' }
+    if (!usuario) {
+      // Distinguir "aparelho sem nenhum cadastro" de "e-mail errado" evita a
+      // sensação de que os dados sumiram: no primeiro caso é só sincronizar.
+      return {
+        ok: false,
+        erro: db.usuarios.length
+          ? 'E-mail não encontrado. Confira se digitou certo.'
+          : 'Este aparelho ainda não recebeu nenhum cadastro. Deixe o app aberto para sincronizar com outro aparelho da igreja, ou crie seu cadastro.',
+      }
+    }
     if (!usuario.sal || !usuario.hash) return { ok: false, erro: 'Cadastro incompleto.' }
 
     const hash = await hashSenha(senha, usuario.sal)
@@ -262,7 +271,10 @@ export const useSession = create<SessionState>((set, get) => ({
       privada = await decifrarComSenha(usuario.chaveCifrada, senha)
     }
     if (!privada || !usuario.pub) {
-      return { ok: false, erro: 'Não foi possível abrir a chave de acesso deste cadastro.' }
+      return {
+        ok: false,
+        erro: 'Senha correta, mas não foi possível abrir a chave deste cadastro neste aparelho.',
+      }
     }
 
     await entrar(usuario, privada, usuario.pub)
@@ -271,12 +283,11 @@ export const useSession = create<SessionState>((set, get) => ({
   },
 
   logout: () => {
-    // Não apagamos o log: os dados ficam no aparelho e no restante da malha,
-    // então basta entrar de novo (com a senha) para recuperar tudo.
+    // Não apagamos nem o log nem a chave: os dados ficam no aparelho e na
+    // malha, e a chave só se abre com a senha de qualquer jeito. Guardá-la
+    // evita o caso em que a pessoa sai e não consegue mais voltar.
     localStorage.removeItem(USER_KEY)
-    void limparChave()
     motor.limparAutor()
-    motor.desconectar()
     set({ user: null, ehDono: false, papeisDisponiveis: ['irmao'], papelAtivo: 'irmao' })
   },
 

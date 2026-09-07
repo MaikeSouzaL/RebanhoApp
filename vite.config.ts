@@ -59,6 +59,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        // Assume o controle na hora: sem isso, uma versão antiga do app pode
+        // continuar sendo servida do cache até o usuário fechar todas as abas —
+        // e aí ele vê telas velhas e cadastros que "somem".
+        skipWaiting: true,
+        clientsClaim: true,
       },
       devOptions: { enabled: false },
     }),

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Cake,
   ChevronRight,
+  Download,
   Eye,
   HandCoins,
   History,
@@ -21,6 +22,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Switch } from '@/components/ui/switch'
 import { useSession } from '@/store/session'
 import { useRede } from '@/store/rede'
+import { appInstalado, pedirInstalacao } from '@/components/shared/install-prompt'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
@@ -118,6 +120,19 @@ export function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
             onCheckedChange={(v) => setTheme(v ? 'dark' : 'light')}
           />
         </div>
+
+        {!appInstalado() && (
+          <button
+            onClick={() => {
+              onOpenChange(false)
+              pedirInstalacao()
+            }}
+            className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card p-3 text-sm font-semibold text-primary active:scale-[0.99]"
+          >
+            <Download className="size-4" />
+            Instalar o app
+          </button>
+        )}
 
         <button
           onClick={() => {

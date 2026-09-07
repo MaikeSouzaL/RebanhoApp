@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { LogIn } from 'lucide-react'
+import { LogIn, Wifi } from 'lucide-react'
 import { Emblem } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useData } from '@/store/data'
+import { useRede } from '@/store/rede'
 import { useSession } from '@/store/session'
 import { toast } from 'sonner'
 
@@ -14,6 +15,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const { login, user, carregando } = useSession()
   const config = useData((s) => s.config)
+  const totalCadastros = useData((s) => s.usuarios.length)
+  const status = useRede((s) => s.status)
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -83,6 +86,20 @@ export function LoginPage() {
             <LogIn />
             {enviando ? 'Entrando…' : 'Entrar'}
           </Button>
+
+          {/* Sem nenhum cadastro local a pessoa precisa saber que é questão de
+              sincronizar (ou de ser a primeira), não que os dados sumiram. */}
+          {totalCadastros === 0 && (
+            <p className="flex items-start gap-1.5 rounded-xl bg-secondary/60 p-2.5 text-xs text-muted-foreground">
+              <Wifi className="mt-0.5 size-3.5 shrink-0" />
+              <span>
+                Nenhum cadastro neste aparelho ainda.{' '}
+                {status === 'conectado'
+                  ? 'Sincronizando com a igreja…'
+                  : 'Deixe o app aberto para encontrar outro aparelho, ou crie seu cadastro.'}
+              </span>
+            </p>
+          )}
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
