@@ -141,7 +141,7 @@ export function DashboardPage() {
       </Card>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label="Entradas"
           value={formatBRL(m.totalEnt, { compact: true })}
@@ -175,6 +175,9 @@ export function DashboardPage() {
         />
       </div>
 
+      {/* No desktop, as cartas de detalhe se organizam em 2 colunas.
+          items-start evita que uma carta estique até a altura da vizinha. */}
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       {/* Composição de entradas */}
       <Card className="p-5">
         <div className="flex items-center justify-between">
@@ -321,15 +324,15 @@ export function DashboardPage() {
         </ul>
       </Card>
 
-      {/* Fundos designados */}
-      <div>
+      {/* Fundos designados — ocupam a largura toda, 4 por linha no desktop */}
+      <div className="lg:col-span-2">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="font-display text-base font-semibold">Fundos designados</h2>
           <Link to="/fundos" className="text-xs font-semibold text-primary">
             Detalhes
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {m.fundosSaldo.map((f) => (
             <Card key={f.fundo.id} className="p-4">
               <div className="flex items-center gap-2">
@@ -348,6 +351,8 @@ export function DashboardPage() {
           ))}
         </div>
       </div>
+      </div>
+      {/* fim do grid de 2 colunas do desktop */}
 
       {/* CTA relatório */}
       <Link to="/relatorios">

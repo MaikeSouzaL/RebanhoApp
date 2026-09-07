@@ -24,7 +24,7 @@ export function AppShell() {
       </div>
 
       {/* No desktop o conteúdo abre espaço para a barra lateral e respira mais. */}
-      <main className="mx-auto max-w-md px-4 pb-28 pt-4 lg:max-w-4xl lg:px-8 lg:pb-12 lg:pl-72 lg:pt-8">
+      <main className="mx-auto max-w-md px-4 pb-28 pt-4 lg:max-w-6xl lg:px-10 lg:pb-12 lg:pl-[19rem] lg:pt-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
