@@ -10,7 +10,8 @@ interface BeforeInstallPromptEvent extends Event {
 
 // Dispensa é só da SESSÃO atual — o convite volta ao reabrir o app.
 const DISMISS_KEY = 'rebanho-install-dismissed'
-// Instalado é permanente — some de vez depois de instalar.
+// Marca de versões antigas. Não é mais usada como verdade (ela ficava presa
+// depois de desinstalar); só limpamos caso ainda exista no aparelho.
 const INSTALLED_KEY = 'rebanho-installed'
 
 function isStandalone() {
@@ -26,8 +27,16 @@ function isIOS() {
 function isAndroid() {
   return /android/i.test(navigator.userAgent)
 }
+
+/**
+ * "Já instalado" = está rodando como app instalado AGORA (janela standalone).
+ *
+ * Antes isto também olhava uma marca no localStorage que, uma vez gravada,
+ * nunca saía — então quem desinstalava continuava sem ver o convite. Detectar
+ * pela janela standalone se corrige sozinho: desinstalou, volta a aparecer.
+ */
 function jaInstalado() {
-  return isStandalone() || localStorage.getItem(INSTALLED_KEY) === '1'
+  return isStandalone()
 }
 
 /** Evento interno para reabrir o convite pelo menu. */
@@ -39,9 +48,9 @@ export function pedirInstalacao() {
   window.dispatchEvent(new Event(EVENTO_INSTALAR))
 }
 
-/** Se o app já está rodando instalado, o item de menu não faz sentido. */
+/** O item de menu só some quando o app já está aberto como instalado. */
 export function appInstalado() {
-  return jaInstalado()
+  return isStandalone()
 }
 
 /**
@@ -57,13 +66,20 @@ export function InstallPrompt() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
+    // Remove a marca antiga que ficava presa e escondia o convite para sempre.
+    try {
+      localStorage.removeItem(INSTALLED_KEY)
+    } catch {
+      /* aparelho sem localStorage — ignora */
+    }
+
     const onPrompt = (e: Event) => {
+      // O evento disparar já prova que o app NÃO está instalado (é instalável).
       e.preventDefault()
       setEvt(e as BeforeInstallPromptEvent)
       if (!jaInstalado() && !sessionStorage.getItem(DISMISS_KEY)) setVisible(true)
     }
     const onInstalled = () => {
-      localStorage.setItem(INSTALLED_KEY, '1')
       setVisible(false)
     }
     // Pedido manual pelo menu: reabre mesmo depois de dispensado.
@@ -98,8 +114,9 @@ export function InstallPrompt() {
   async function install() {
     if (!evt) return
     await evt.prompt()
-    const escolha = await evt.userChoice
-    if (escolha.outcome === 'accepted') localStorage.setItem(INSTALLED_KEY, '1')
+    await evt.userChoice
+    // Não gravamos nada de permanente: se instalar, o app passa a abrir em
+    // janela standalone e o convite some sozinho; se desinstalar, volta.
     setVisible(false)
   }
 
