@@ -1,15 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import {
-  Cake,
   ChevronRight,
   Download,
   Eye,
-  HandCoins,
-  History,
   LogOut,
   Moon,
-  PiggyBank,
-  Settings,
   ShieldCheck,
   Sun,
   Users,
@@ -19,33 +14,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Switch } from '@/components/ui/switch'
 import { useSession } from '@/store/session'
+import { menuLinksForRole } from '@/app/nav'
 import { appInstalado, pedirInstalacao } from '@/components/shared/install-prompt'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
 import type { Papel } from '@/data/types'
 
-type Link = { to: string; label: string; desc: string; icon: LucideIcon }
-
-const FUNDOS: Link = { to: '/fundos', label: 'Fundos', desc: 'Missões, construção, assistência', icon: PiggyBank }
-const CONFIG: Link = { to: '/config', label: 'Configurações', desc: 'Dados da igreja e categorias', icon: Settings }
-const MEMBROS: Link = { to: '/membros', label: 'Membros', desc: 'Contribuintes e histórico', icon: Users }
-const CONTRIBUIR: Link = { to: '/contribuir', label: 'Contribuir', desc: 'Chave Pix e QR Code', icon: HandCoins }
-const ANIVERSARIOS: Link = { to: '/aniversariantes', label: 'Aniversariantes', desc: 'Do mês', icon: Cake }
-const ATIVIDADE: Link = { to: '/atividade', label: 'Atividade', desc: 'Histórico de ações', icon: History }
-const USUARIOS: Link = { to: '/usuarios', label: 'Usuários', desc: 'Definir pastores e tesoureiros', icon: ShieldCheck }
-
-function linksForRole(papel: Papel | undefined): Link[] {
-  if (papel === 'irmao') return [CONTRIBUIR, FUNDOS, CONFIG]
-  if (papel === 'pastor') return [USUARIOS, MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG]
-  return [MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG]
-}
-
 export function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const navigate = useNavigate()
   const { user, theme, setTheme, logout, ehDono, papeisDisponiveis, papelAtivo, entrarComoPapel } =
     useSession()
-  const links = linksForRole(papelAtivo)
+  const links = menuLinksForRole(papelAtivo)
   // Mostra o seletor quando há mais de um papel (ou para o dono, que vê todos).
   const podeTrocar = ehDono || papeisDisponiveis.length > 1
 

@@ -1,12 +1,18 @@
 import {
   ArrowDownCircle,
   ArrowUpCircle,
+  Cake,
   FileText,
   HandCoins,
+  History,
   LayoutDashboard,
   ListChecks,
+  PiggyBank,
   Receipt,
+  Settings,
+  ShieldCheck,
   Sprout,
+  Users,
   UserRound,
   type LucideIcon,
 } from 'lucide-react'
@@ -17,6 +23,7 @@ export interface NavItem {
   label: string
   icon: LucideIcon
   end?: boolean
+  desc?: string
 }
 
 /** Abas principais (bottom nav) do Pastor. */
@@ -50,4 +57,20 @@ export function tabsForRole(papel: Papel | undefined): NavItem[] {
   if (papel === 'tesoureiro') return TESOUREIRO_TABS
   if (papel === 'irmao') return IRMAO_TABS
   return PASTOR_TABS
+}
+
+// ---- Itens secundários (menu / barra lateral) ----
+const USUARIOS: NavItem = { to: '/usuarios', label: 'Usuários', icon: ShieldCheck, desc: 'Definir pastores e tesoureiros' }
+const MEMBROS: NavItem = { to: '/membros', label: 'Membros', icon: Users, desc: 'Contribuintes e histórico' }
+const ANIVERSARIOS: NavItem = { to: '/aniversariantes', label: 'Aniversariantes', icon: Cake, desc: 'Do mês' }
+const FUNDOS: NavItem = { to: '/fundos', label: 'Fundos', icon: PiggyBank, desc: 'Missões, construção, assistência' }
+const ATIVIDADE: NavItem = { to: '/atividade', label: 'Atividade', icon: History, desc: 'Histórico de ações' }
+const CONTRIBUIR: NavItem = { to: '/contribuir', label: 'Contribuir', icon: HandCoins, desc: 'Chave Pix e QR Code' }
+const CONFIG: NavItem = { to: '/config', label: 'Configurações', icon: Settings, desc: 'Seus dados e a igreja' }
+
+/** Destinos além das abas principais — mostrados no menu e na barra lateral. */
+export function menuLinksForRole(papel: Papel | undefined): NavItem[] {
+  if (papel === 'irmao') return [CONTRIBUIR, FUNDOS, CONFIG]
+  if (papel === 'pastor') return [USUARIOS, MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG]
+  return [MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG]
 }

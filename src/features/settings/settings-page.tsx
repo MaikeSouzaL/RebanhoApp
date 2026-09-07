@@ -27,7 +27,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { CurrencyInput } from '@/components/shared/currency-input'
+import { TIPOS_PIX } from '@/lib/pix'
 import {
   Dialog,
   DialogContent,
@@ -157,6 +165,24 @@ export function SettingsPage() {
                 <Input id={f.key} value={String(form[f.key] ?? '')} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
               </div>
             ))}
+            <div className="space-y-1.5">
+              <Label>Tipo da chave Pix</Label>
+              <Select value={form.pixTipo} onValueChange={(v) => setForm({ ...form, pixTipo: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_PIX.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                A chave Pix aparece para todos na tela Contribuir (com QR Code e copia e cola).
+              </p>
+            </div>
             <Button className="w-full" onClick={salvarDados}>
               <Save /> Salvar alterações
             </Button>

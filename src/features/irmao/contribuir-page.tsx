@@ -1,22 +1,32 @@
 import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { Check, Copy, HandCoins, HeartHandshake, Info } from 'lucide-react'
+import { Check, Copy, HandCoins, HeartHandshake, Info, QrCode } from 'lucide-react'
 import { useData } from '@/store/data'
+import { montarPixCopiaECola } from '@/lib/pix'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/shared/empty-state'
 import { toast } from 'sonner'
 
 export function ContribuirPage() {
   const { config } = useData()
-  const [copiado, setCopiado] = useState(false)
+  const [copiado, setCopiado] = useState<'chave' | 'codigo' | null>(null)
 
-  async function copiar() {
+  const temChave = !!config.pixChave?.trim()
+  // Pix Copia e Cola de verdade (escaneável no app do banco).
+  const codigoPix = montarPixCopiaECola({
+    chave: config.pixChave,
+    nome: config.razaoSocial || config.nome,
+    cidade: config.cidade,
+  })
+
+  async function copiar(oque: 'chave' | 'codigo', texto: string) {
     try {
-      await navigator.clipboard.writeText(config.pixChave)
-      setCopiado(true)
-      toast.success('Chave Pix copiada!')
-      setTimeout(() => setCopiado(false), 2000)
+      await navigator.clipboard.writeText(texto)
+      setCopiado(oque)
+      toast.success(oque === 'chave' ? 'Chave Pix copiada!' : 'Pix copia e cola copiado!')
+      setTimeout(() => setCopiado(null), 2000)
     } catch {
       toast.error('Não foi possível copiar.')
     }
@@ -26,26 +36,42 @@ export function ContribuirPage() {
     <div className="space-y-4">
       <PageHeader title="Contribuir" subtitle="Dízimos e ofertas pela paz de Deus" />
 
-      {/* Cartão Pix com QR */}
-      <Card className="bg-flame-glow flex flex-col items-center p-6 text-center">
-        <span className="rounded-full bg-primary/12 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
-          Pix · {config.pixTipo}
-        </span>
-        <div className="mt-4 rounded-2xl bg-white p-4 shadow-warm">
-          <QRCodeSVG value={config.pixChave} size={168} fgColor="#17231C" bgColor="#ffffff" level="M" />
-        </div>
-        <p className="mt-4 font-display text-lg font-semibold">{config.nome}</p>
-        <p className="text-xs text-muted-foreground">{config.razaoSocial}</p>
+      {temChave ? (
+        /* Cartão Pix com QR escaneável */
+        <Card className="bg-flame-glow flex flex-col items-center p-6 text-center">
+          <span className="rounded-full bg-primary/12 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
+            Pix · {config.pixTipo}
+          </span>
+          <div className="mt-4 rounded-2xl bg-white p-4 shadow-warm">
+            <QRCodeSVG value={codigoPix} size={188} fgColor="#17231C" bgColor="#ffffff" level="M" />
+          </div>
+          <p className="mt-4 font-display text-lg font-semibold">{config.nome}</p>
+          <p className="text-xs text-muted-foreground">{config.razaoSocial}</p>
 
-        <div className="mt-4 w-full rounded-xl border border-border bg-card p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Chave Pix</p>
-          <p className="tabular mt-0.5 break-all text-sm font-semibold">{config.pixChave}</p>
-        </div>
-        <Button className="mt-3 w-full" onClick={copiar}>
-          {copiado ? <Check /> : <Copy />}
-          {copiado ? 'Copiada!' : 'Copiar chave Pix'}
-        </Button>
-      </Card>
+          <div className="mt-4 w-full rounded-xl border border-border bg-card p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Chave Pix
+            </p>
+            <p className="tabular mt-0.5 break-all text-sm font-semibold">{config.pixChave}</p>
+          </div>
+          <div className="mt-3 grid w-full grid-cols-2 gap-2">
+            <Button variant="secondary" onClick={() => copiar('chave', config.pixChave)}>
+              {copiado === 'chave' ? <Check /> : <Copy />}
+              {copiado === 'chave' ? 'Copiada!' : 'Copiar chave'}
+            </Button>
+            <Button onClick={() => copiar('codigo', codigoPix)}>
+              {copiado === 'codigo' ? <Check /> : <QrCode />}
+              {copiado === 'codigo' ? 'Copiado!' : 'Copia e cola'}
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <EmptyState
+          icon={QrCode}
+          title="Pix ainda não configurado"
+          description="O pastor precisa cadastrar a chave Pix da igreja em Configurações para que as contribuições apareçam aqui."
+        />
+      )}
 
       {/* O que é dízimo/oferta */}
       <Card className="p-5">
