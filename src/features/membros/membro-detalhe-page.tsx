@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FormaTag } from '@/components/shared/tags'
+import { MembroDados } from './membro-dados'
 
 export function MembroDetalhePage() {
   const { id } = useParams()
@@ -155,6 +156,9 @@ export function MembroDetalhePage() {
           )}
         </Card>
       </div>
+
+      {/* Dados do membro — pastor e tesoureiro editam e salvam no banco. */}
+      <MembroDados membroId={membro.id} titulo="Dados do membro" />
     </div>
   )
 }

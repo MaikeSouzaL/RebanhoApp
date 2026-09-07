@@ -21,6 +21,7 @@ import {
 } from '@/lib/prefs'
 import { formatDate } from '@/lib/format'
 import { PageHeader } from '@/components/shared/page-header'
+import { MembroDados } from '@/features/membros/membro-dados'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -64,6 +65,11 @@ export function SettingsPage() {
   const dados = useData()
   const { config, saveConfig } = dados
   const { theme, setTheme } = useSession()
+  const user = useSession((s) => s.user)
+  const ehDono = useSession((s) => s.ehDono)
+  const papelAtivo = useSession((s) => s.papelAtivo)
+  // Só o pastor (e o dono) edita os dados da igreja e o orçamento.
+  const ehPastor = ehDono || papelAtivo === 'pastor'
   const [form, setForm] = useState<ConfigIgreja>(config)
   const [orc, setOrc] = useState<Partial<Record<CategoriaDespesaId, number>>>(config.orcamento ?? {})
   const [fonte, setFonte] = useState<FontScale>(getFontScale())
@@ -126,26 +132,40 @@ export function SettingsPage() {
   }
   return (
     <div className="space-y-4">
-      <PageHeader title="Configurações" subtitle="Dados da igreja e preferências" />
+      <PageHeader
+        title="Configurações"
+        subtitle={ehPastor ? 'Seus dados e os dados da igreja' : 'Seus dados e preferências'}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados da igreja</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {FIELDS.map((f) => (
-            <div key={f.key} className="space-y-1.5">
-              <Label htmlFor={f.key}>{f.label}</Label>
-              <Input id={f.key} value={String(form[f.key] ?? '')} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
-            </div>
-          ))}
-          <Button className="w-full" onClick={salvarDados}>
-            <Save /> Salvar alterações
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Meus dados — todo mundo edita a própria ficha e salva no banco. */}
+      <MembroDados
+        membroId={user?.membroId}
+        titulo="Meus dados"
+        descricao="Seus dados de membro. O aniversário aqui alimenta a tela de aniversariantes."
+      />
+
+      {/* Dados da igreja e orçamento: só o pastor edita (o banco também exige). */}
+      {ehPastor && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados da igreja</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {FIELDS.map((f) => (
+              <div key={f.key} className="space-y-1.5">
+                <Label htmlFor={f.key}>{f.label}</Label>
+                <Input id={f.key} value={String(form[f.key] ?? '')} onChange={(e) => setForm({ ...form, [f.key]: e.target.value })} />
+              </div>
+            ))}
+            <Button className="w-full" onClick={salvarDados}>
+              <Save /> Salvar alterações
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Orçamento mensal */}
+      {ehPastor && (
       <Card>
         <CardHeader>
           <CardTitle>Orçamento mensal</CardTitle>
@@ -165,6 +185,7 @@ export function SettingsPage() {
           </Button>
         </CardContent>
       </Card>
+      )}
 
       {/* Aparência */}
       <Card>

@@ -8,7 +8,6 @@ import {
   History,
   LogOut,
   Moon,
-  Palette,
   PiggyBank,
   Settings,
   ShieldCheck,
@@ -30,7 +29,6 @@ type Link = { to: string; label: string; desc: string; icon: LucideIcon }
 
 const FUNDOS: Link = { to: '/fundos', label: 'Fundos', desc: 'Missões, construção, assistência', icon: PiggyBank }
 const CONFIG: Link = { to: '/config', label: 'Configurações', desc: 'Dados da igreja e categorias', icon: Settings }
-const STYLE: Link = { to: '/style', label: 'Style Guide', desc: 'Identidade visual do app', icon: Palette }
 const MEMBROS: Link = { to: '/membros', label: 'Membros', desc: 'Contribuintes e histórico', icon: Users }
 const CONTRIBUIR: Link = { to: '/contribuir', label: 'Contribuir', desc: 'Chave Pix e QR Code', icon: HandCoins }
 const ANIVERSARIOS: Link = { to: '/aniversariantes', label: 'Aniversariantes', desc: 'Do mês', icon: Cake }
@@ -38,9 +36,9 @@ const ATIVIDADE: Link = { to: '/atividade', label: 'Atividade', desc: 'Históric
 const USUARIOS: Link = { to: '/usuarios', label: 'Usuários', desc: 'Definir pastores e tesoureiros', icon: ShieldCheck }
 
 function linksForRole(papel: Papel | undefined): Link[] {
-  if (papel === 'irmao') return [CONTRIBUIR, FUNDOS, CONFIG, STYLE]
-  if (papel === 'pastor') return [USUARIOS, MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG, STYLE]
-  return [MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG, STYLE]
+  if (papel === 'irmao') return [CONTRIBUIR, FUNDOS, CONFIG]
+  if (papel === 'pastor') return [USUARIOS, MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG]
+  return [MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG]
 }
 
 export function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {

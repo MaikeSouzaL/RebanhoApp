@@ -11,10 +11,9 @@ export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
   const papel = useSession((s) => s.papelAtivo)
-  // O FAB de ação rápida é de quem lança dinheiro (pastor e tesoureiro), mas
-  // não nas telas de formulário (seria redundante).
-  const isForm = /^\/(novo|editar|culto)/.test(location.pathname)
-  const showFab = (papel === 'tesoureiro' || papel === 'pastor') && !isForm
+  // O FAB de ação rápida (novo lançamento) aparece só na tela inicial.
+  const showFab =
+    (papel === 'tesoureiro' || papel === 'pastor') && location.pathname === '/'
 
   return (
     <div className="min-h-dvh bg-background">

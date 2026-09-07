@@ -41,7 +41,10 @@ export function MembrosPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Membros" subtitle={`${membros.length} cadastrados · contribuições no ano`} />
+      <PageHeader
+        title="Membros"
+        subtitle={`${membros.filter((m) => m.id !== membroDono).length} cadastrados · contribuições no ano`}
+      />
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

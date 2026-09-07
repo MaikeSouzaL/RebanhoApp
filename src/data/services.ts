@@ -207,22 +207,44 @@ export const services = {
    * de qualquer outro, e um gatilho impede a igreja de ficar sem pastor.
    */
   async definirPapeis(usuarioId: string, papeis: Papel[], cargo?: string): Promise<void> {
-    const alvo = normalizarPapeis(papeis)
+    const alvo = normalizarPapeis(papeis).map(papelParaBanco)
 
-    const { error: e1 } = await supabase.from('user_roles').delete().eq('user_id', usuarioId)
-    if (e1) erro('alterar os acessos', e1)
-
-    const { error: e2 } = await supabase
+    // Aplica só a diferença — nunca apaga um papel que vai continuar. Apagar
+    // tudo e reinserir esbarraria no gatilho que impede remover o último
+    // pastor, quebrando a edição do próprio pastor.
+    const { data: atuaisRows, error: e0 } = await supabase
       .from('user_roles')
-      .insert(alvo.map((p) => ({ user_id: usuarioId, papel: papelParaBanco(p) })))
-    if (e2) erro('alterar os acessos', e2)
+      .select('papel')
+      .eq('user_id', usuarioId)
+    if (e0) erro('ler os acessos', e0)
+
+    const atuais = new Set((atuaisRows ?? []).map((r) => String(r.papel)))
+    const alvoSet = new Set(alvo)
+    const adicionar = alvo.filter((p) => !atuais.has(p))
+    const remover = [...atuais].filter((p) => !alvoSet.has(p))
+
+    // Adiciona antes de remover, para nunca passar por um estado sem pastor.
+    if (adicionar.length) {
+      const { error } = await supabase
+        .from('user_roles')
+        .insert(adicionar.map((papel) => ({ user_id: usuarioId, papel })))
+      if (error) erro('alterar os acessos', error)
+    }
+    if (remover.length) {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', usuarioId)
+        .in('papel', remover)
+      if (error) erro('alterar os acessos', error)
+    }
 
     if (cargo !== undefined) {
-      const { error: e3 } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ cargo: cargo.trim() || 'Membro' })
         .eq('id', usuarioId)
-      if (e3) erro('definir o cargo', e3)
+      if (error) erro('definir o cargo', error)
     }
     void auditar('editou', 'usuário', `acessos: ${alvo.join(' + ')}`)
   },
