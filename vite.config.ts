@@ -29,6 +29,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // O registro é feito à mão em main.tsx (com verificação periódica).
+      injectRegister: null,
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: 'O Rebanho de Jesus Cristo — Gestão',

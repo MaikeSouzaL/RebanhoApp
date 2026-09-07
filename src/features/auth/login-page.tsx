@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { LogIn, Wifi } from 'lucide-react'
+import { Loader2, LogIn, Wifi } from 'lucide-react'
 import { Emblem } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { login, user, carregando } = useSession()
+  const { login, user, carregando, sincronizando } = useSession()
   const config = useData((s) => s.config)
   const totalCadastros = useData((s) => s.usuarios.length)
   const status = useRede((s) => s.status)
@@ -83,9 +83,16 @@ export function LoginPage() {
             />
           </div>
           <Button type="submit" size="lg" className="w-full" disabled={enviando}>
-            <LogIn />
-            {enviando ? 'Entrando…' : 'Entrar'}
+            {sincronizando ? <Loader2 className="animate-spin" /> : <LogIn />}
+            {sincronizando ? 'Procurando seu cadastro…' : enviando ? 'Entrando…' : 'Entrar'}
           </Button>
+
+          {sincronizando && (
+            <p className="text-center text-xs text-muted-foreground">
+              Primeiro acesso neste aparelho: buscando seus dados nos outros aparelhos da igreja.
+              Isso pode levar até um minuto.
+            </p>
+          )}
 
           {/* Sem nenhum cadastro local a pessoa precisa saber que é questão de
               sincronizar (ou de ser a primeira), não que os dados sumiram. */}

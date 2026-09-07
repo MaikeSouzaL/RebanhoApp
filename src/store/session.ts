@@ -71,6 +71,8 @@ interface SessionState {
   locked: boolean
   /** Verdadeiro enquanto o log ainda está sendo lido do disco. */
   carregando: boolean
+  /** Verdadeiro enquanto o login aguarda o cadastro chegar pela malha. */
+  sincronizando: boolean
 
   iniciar: () => Promise<void>
   cadastrar: (dados: DadosCadastro) => Promise<Resultado>
@@ -99,6 +101,32 @@ function emailIgual(a: string, b: string) {
   return a.trim().toLowerCase() === b.trim().toLowerCase()
 }
 
+/**
+ * Espera um cadastro chegar pela malha.
+ *
+ * Num aparelho novo o log começa vazio e a descoberta P2P leva de alguns
+ * segundos a cerca de um minuto. Sem esta espera, quem tenta entrar logo ao
+ * abrir recebe "e-mail não encontrado" e acha que perdeu os dados.
+ */
+function esperarCadastro(email: string, ms: number): Promise<Usuario | null> {
+  const achar = () => db.usuarios.find((u) => emailIgual(u.email, email)) ?? null
+  const agora = achar()
+  if (agora) return Promise.resolve(agora)
+  return new Promise((resolve) => {
+    const parar = motor.inscrever(() => {
+      const achado = achar()
+      if (!achado) return
+      parar()
+      clearTimeout(prazo)
+      resolve(achado)
+    })
+    const prazo = setTimeout(() => {
+      parar()
+      resolve(null)
+    }, ms)
+  })
+}
+
 /** Coloca o usuário no ar: define quem assina, avisa a auditoria e conecta. */
 async function entrar(usuario: Usuario, privada: string, publica: string) {
   motor.definirAutor({
@@ -124,6 +152,7 @@ export const useSession = create<SessionState>((set, get) => ({
   period: monthPeriod(),
   locked: hasPin(),
   carregando: true,
+  sincronizando: false,
 
   /** Lê o log do disco e restaura a sessão anterior, se houver. */
   iniciar: async () => {
@@ -247,15 +276,24 @@ export const useSession = create<SessionState>((set, get) => ({
   },
 
   login: async (email, senha) => {
-    const usuario = db.usuarios.find((u) => emailIgual(u.email, email))
+    let usuario = db.usuarios.find((u) => emailIgual(u.email, email)) ?? null
+
+    // Aparelho ainda sem nenhum cadastro: o dado pode estar a caminho pela
+    // malha, então damos tempo de ele chegar antes de dizer que não existe.
+    // Quando já há cadastros aqui e o e-mail não bate, é engano de digitação —
+    // aí responde na hora.
+    if (!usuario && db.usuarios.length === 0) {
+      set({ sincronizando: true })
+      usuario = await esperarCadastro(email, 45_000)
+      set({ sincronizando: false })
+    }
+
     if (!usuario) {
-      // Distinguir "aparelho sem nenhum cadastro" de "e-mail errado" evita a
-      // sensação de que os dados sumiram: no primeiro caso é só sincronizar.
       return {
         ok: false,
         erro: db.usuarios.length
           ? 'E-mail não encontrado. Confira se digitou certo.'
-          : 'Este aparelho ainda não recebeu nenhum cadastro. Deixe o app aberto para sincronizar com outro aparelho da igreja, ou crie seu cadastro.',
+          : 'Nenhum cadastro chegou a este aparelho. Peça para alguém da igreja abrir o app ao mesmo tempo — ou crie seu cadastro aqui.',
       }
     }
     if (!usuario.sal || !usuario.hash) return { ok: false, erro: 'Cadastro incompleto.' }
