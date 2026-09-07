@@ -25,8 +25,8 @@ const atualizarApp = registerSW({
   },
 })
 
-// Le o log do disco, restaura a sessao e liga a rede. A interface ja aparece
-// enquanto isso acontece; os guards seguram as rotas ate terminar.
+// Restaura a sessao do Supabase e carrega os dados da igreja. A interface ja
+// aparece enquanto isso acontece; os guards seguram as rotas ate terminar.
 void useSession.getState().iniciar()
 
 createRoot(document.getElementById('root')!).render(

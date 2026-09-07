@@ -8,7 +8,6 @@ import { LockScreen } from '@/features/auth/lock-screen'
 import { LoginPage } from '@/features/auth/login-page'
 import { CadastroPage } from '@/features/auth/cadastro-page'
 import { UsuariosPage } from '@/features/usuarios/usuarios-page'
-import { RedePage } from '@/features/rede/rede-page'
 import { HomeRouter } from '@/features/home/home-router'
 import { EntradasPage } from '@/features/entradas/entradas-page'
 import { SaidasPage } from '@/features/saidas/saidas-page'
@@ -51,7 +50,6 @@ export default function App() {
           <Route path="contas" element={<ContasPage />} />
           <Route path="fundos" element={<FundosPage />} />
           <Route path="config" element={<SettingsPage />} />
-          <Route path="rede" element={<RedePage />} />
           <Route path="style" element={<StyleGuidePage />} />
 
           {/* Irmãos (transparência) */}
@@ -113,7 +111,7 @@ export default function App() {
           <Route
             path="lancamentos"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <LancamentosPage />
               </RoleGuard>
             }
@@ -121,7 +119,7 @@ export default function App() {
           <Route
             path="novo/dizimo"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <EntradaFormPage tipo="dizimo" />
               </RoleGuard>
             }
@@ -129,7 +127,7 @@ export default function App() {
           <Route
             path="novo/oferta"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <EntradaFormPage tipo="oferta" />
               </RoleGuard>
             }
@@ -137,7 +135,7 @@ export default function App() {
           <Route
             path="novo/despesa"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <DespesaFormPage />
               </RoleGuard>
             }
@@ -145,7 +143,7 @@ export default function App() {
           <Route
             path="novo/conta"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <ContaFormPage />
               </RoleGuard>
             }
@@ -153,7 +151,7 @@ export default function App() {
           <Route
             path="culto"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <CultoPage />
               </RoleGuard>
             }
@@ -161,7 +159,7 @@ export default function App() {
           <Route
             path="editar/entrada/:id"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <EntradaFormPage />
               </RoleGuard>
             }
@@ -169,7 +167,7 @@ export default function App() {
           <Route
             path="editar/despesa/:id"
             element={
-              <RoleGuard allow={['tesoureiro']}>
+              <RoleGuard allow={['pastor', 'tesoureiro']}>
                 <DespesaFormPage />
               </RoleGuard>
             }

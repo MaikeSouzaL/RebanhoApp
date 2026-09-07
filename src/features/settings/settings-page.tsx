@@ -1,18 +1,15 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import {
   Download,
   KeyRound,
   Moon,
-  RotateCcw,
   Save,
   Sun,
   Type,
-  Upload,
 } from 'lucide-react'
 import { useData } from '@/store/data'
 import { useSession } from '@/store/session'
-import { services } from '@/data/services'
-import type { CategoriaDespesaId, ConfigIgreja, Database } from '@/data/types'
+import type { CategoriaDespesaId, ConfigIgreja } from '@/data/types'
 import { CATEGORIA_MAP } from '@/data/categorias'
 import {
   clearPin,
@@ -32,13 +29,11 @@ import { Switch } from '@/components/ui/switch'
 import { CurrencyInput } from '@/components/shared/currency-input'
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -66,15 +61,9 @@ const FONTES: { value: FontScale; label: string }[] = [
 ]
 
 export function SettingsPage() {
-  const { config, saveConfig, resetDados, importBackup } = useData()
-  const { theme, setTheme, logout } = useSession()
-
-  // Apagar o log encerra a sessão: sem usuários, o app volta ao cadastro.
-  function apagarTudoLocal() {
-    resetDados()
-    logout()
-    toast.success('Dados locais apagados.')
-  }
+  const dados = useData()
+  const { config, saveConfig } = dados
+  const { theme, setTheme } = useSession()
   const [form, setForm] = useState<ConfigIgreja>(config)
   const [orc, setOrc] = useState<Partial<Record<CategoriaDespesaId, number>>>(config.orcamento ?? {})
   const [fonte, setFonte] = useState<FontScale>(getFontScale())
@@ -82,7 +71,6 @@ export function SettingsPage() {
   const [pin1, setPin1] = useState('')
   const [pin2, setPin2] = useState('')
   const [pinDialog, setPinDialog] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   function salvarDados() {
     saveConfig({ ...form })
@@ -118,7 +106,15 @@ export function SettingsPage() {
   }
 
   function exportar() {
-    const data = services.snapshot()
+    const data = {
+      config: dados.config,
+      membros: dados.membros,
+      fundos: dados.fundos,
+      entradas: dados.entradas,
+      saidas: dados.saidas,
+      contasPagar: dados.contasPagar,
+      relatorios: dados.relatorios,
+    }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -128,24 +124,6 @@ export function SettingsPage() {
     URL.revokeObjectURL(url)
     toast.success('Backup exportado.')
   }
-  function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(String(reader.result)) as Database
-        if (!Array.isArray(data.entradas) || !data.config) throw new Error('inválido')
-        importBackup(data)
-        toast.success('Backup importado com sucesso.')
-      } catch {
-        toast.error('Arquivo de backup inválido.')
-      }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
-  }
-
   return (
     <div className="space-y-4">
       <PageHeader title="Configurações" subtitle="Dados da igreja e preferências" />
@@ -250,57 +228,12 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Exporte um arquivo com todos os dados (para guardar ou passar de um aparelho a outro).
+            Baixe um arquivo com os dados da igreja para guardar fora do sistema. Os dados ficam no
+            servidor, então isto é uma cópia de segurança — não é preciso importar de volta.
           </p>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={exportar}>
-              <Download /> Exportar
-            </Button>
-            <Button variant="outline" onClick={() => fileRef.current?.click()}>
-              <Upload /> Importar
-            </Button>
-          </div>
-          <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={onImportFile} />
-          <p className="text-xs text-muted-foreground">Importar substitui todos os dados atuais.</p>
-        </CardContent>
-      </Card>
-
-      {/* Apagar tudo */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Apagar dados deste aparelho</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-3 text-sm text-muted-foreground">
-            Remove todo o histórico guardado aqui e desconecta a conta. Os dados continuam nos
-            outros aparelhos da igreja — ao entrar de novo com o código, eles voltam.
-          </p>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full text-destructive">
-                <RotateCcw /> Apagar tudo deste aparelho
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Apagar os dados locais?</DialogTitle>
-                <DialogDescription>
-                  Some tudo o que está guardado neste aparelho e a conta é encerrada. Não pode ser
-                  desfeito aqui, mas nada se perde nos demais aparelhos da igreja.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">Cancelar</Button>
-                </DialogClose>
-                <DialogClose asChild>
-                  <Button variant="destructive" onClick={apagarTudoLocal}>
-                    Apagar
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" className="w-full" onClick={exportar}>
+            <Download /> Exportar backup
+          </Button>
         </CardContent>
       </Card>
 

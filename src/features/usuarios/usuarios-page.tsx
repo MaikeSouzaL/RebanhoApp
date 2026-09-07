@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, Search, ShieldCheck, Trash2, UserRound, Users, Wallet } from 'lucide-react'
+import { Check, Search, ShieldCheck, UserRound, Users, Wallet } from 'lucide-react'
 import { useData } from '@/store/data'
 import { useSession } from '@/store/session'
 import { initials } from '@/lib/format'
@@ -8,7 +8,6 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -20,16 +19,14 @@ import {
 import { EmptyState } from '@/components/shared/empty-state'
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ehEmailDono, normalizarPapeis, papeisDoUsuario } from '@/sync/dono'
+import { ehEmailDono, normalizarPapeis, papeisDoUsuario } from '@/lib/papeis'
 import { CARGOS, cargoDe } from '@/data/cargos'
-import { estadoAtual } from '@/sync/motor'
 import type { Papel, Usuario } from '@/data/types'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -46,17 +43,26 @@ const META_PAPEL: Record<Papel, (typeof PAPEIS)[number]> = {
   irmao: PAPEIS[2]!,
 }
 
+function descricaoPapel(papel: Papel): string {
+  if (papel === 'pastor') return 'Vê tudo, edita a igreja e define acessos.'
+  if (papel === 'tesoureiro') return 'Lança entradas, saídas e contas a pagar.'
+  return 'Acompanha a prestação de contas e a própria contribuição.'
+}
+
 export function UsuariosPage() {
-  const { usuarios, definirPapeis, removeUsuario } = useData()
+  const { usuarios, definirPapeis } = useData()
   const eu = useSession((s) => s.user)
   const [busca, setBusca] = useState('')
   const [emEdicao, setEmEdicao] = useState<Usuario | null>(null)
   const [selecao, setSelecao] = useState<Papel[]>([])
   const [cargo, setCargo] = useState<string>('Membro')
-  const [paraExcluir, setParaExcluir] = useState<Usuario | null>(null)
+  const [salvando, setSalvando] = useState(false)
 
-  // Quem fundou a igreja é o primeiro cadastro do log; o papel dele é fixo.
-  const fundador = estadoAtual().fundador
+  // Quantos pastores existem — o banco impede a igreja de ficar sem nenhum.
+  const totalPastores = useMemo(
+    () => usuarios.filter((u) => papeisDoUsuario(u).includes('pastor')).length,
+    [usuarios],
+  )
 
   const lista = useMemo(() => {
     const q = busca.trim().toLowerCase()
@@ -74,34 +80,34 @@ export function UsuariosPage() {
     setEmEdicao(usuario)
   }
 
-  /** Liga/desliga um papel na seleção, garantindo ao menos um. */
+  /** Liga/desliga um acesso, garantindo que sobre ao menos um. */
   function alternar(papel: Papel) {
     setSelecao((atual) => {
-      const tem = atual.includes(papel)
-      const nova = tem ? atual.filter((p) => p !== papel) : [...atual, papel]
+      const nova = atual.includes(papel) ? atual.filter((p) => p !== papel) : [...atual, papel]
       return nova.length ? nova : atual
     })
   }
 
-  function salvarPapeis() {
+  // Retirar o último pastor deixaria a igreja sem quem administra — o banco
+  // recusaria de qualquer forma, então nem oferecemos a opção.
+  const ehUnicoPastor =
+    !!emEdicao && totalPastores === 1 && papeisDoUsuario(emEdicao).includes('pastor')
+
+  async function salvar() {
     if (!emEdicao) return
-    definirPapeis(emEdicao.id, selecao, cargo)
+    setSalvando(true)
+    await definirPapeis(emEdicao.id, selecao, cargo)
+    setSalvando(false)
     const nomes = normalizarPapeis(selecao).map((p) => META_PAPEL[p].label)
     setEmEdicao(null)
     toast.success(`${emEdicao.nome}: ${nomes.join(' + ')}.`)
-  }
-
-  function excluir(usuario: Usuario) {
-    removeUsuario(usuario.id)
-    setParaExcluir(null)
-    toast.success('Cadastro removido.')
   }
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Usuários"
-        subtitle={`${usuarios.length} cadastrados · você define os papéis`}
+        subtitle={`${lista.length} cadastrados · você define os acessos`}
       />
 
       <Card className="flex items-start gap-3 p-4">
@@ -128,7 +134,6 @@ export function UsuariosPage() {
         <Card className="divide-y divide-border p-0">
           {lista.map((usuario) => {
             const papeis = papeisDoUsuario(usuario)
-            const ehFundador = usuario.id === fundador
             return (
               <button
                 key={usuario.id}
@@ -142,31 +147,30 @@ export function UsuariosPage() {
                   <p className="truncate text-sm font-semibold">
                     {usuario.nome}
                     {usuario.id === eu?.id && (
-                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">(você)</span>
+                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                        (você)
+                      </span>
                     )}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {cargoDe(usuario.cargo)} · {usuario.email}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="flex flex-wrap justify-end gap-1">
-                    {papeis.map((p) => {
-                      const meta = META_PAPEL[p]
-                      const Icone = meta.icone
-                      return (
-                        <span
-                          key={p}
-                          className={cn('flex items-center gap-1 text-xs font-semibold', meta.classe)}
-                        >
-                          <Icone className="size-3.5" />
-                          {meta.label}
-                        </span>
-                      )
-                    })}
-                  </span>
-                  {ehFundador && <Badge variant="secondary">Fundador</Badge>}
-                </div>
+                <span className="flex flex-wrap justify-end gap-1">
+                  {papeis.map((p) => {
+                    const meta = META_PAPEL[p]
+                    const Icone = meta.icone
+                    return (
+                      <span
+                        key={p}
+                        className={cn('flex items-center gap-1 text-xs font-semibold', meta.classe)}
+                      >
+                        <Icone className="size-3.5" />
+                        {meta.label}
+                      </span>
+                    )
+                  })}
+                </span>
               </button>
             )
           })}
@@ -185,8 +189,8 @@ export function UsuariosPage() {
           <DialogHeader>
             <DialogTitle>{emEdicao?.nome}</DialogTitle>
             <DialogDescription>
-              {emEdicao?.id === fundador
-                ? 'Fundador da igreja — sempre mantém o acesso de pastor. Pode acumular outros.'
+              {ehUnicoPastor
+                ? 'Único pastor da igreja — o acesso de pastor não pode sair. Pode acumular outros.'
                 : 'Marque tudo o que esta pessoa pode fazer. Ela pode ter mais de um acesso e alternar entre eles.'}
             </DialogDescription>
           </DialogHeader>
@@ -195,7 +199,7 @@ export function UsuariosPage() {
             {PAPEIS.map((p) => {
               const Icone = p.icone
               const ativo = selecao.includes(p.valor)
-              const travado = emEdicao?.id === fundador && p.valor === 'pastor'
+              const travado = ehUnicoPastor && p.valor === 'pastor'
               return (
                 <button
                   key={p.valor}
@@ -207,12 +211,19 @@ export function UsuariosPage() {
                     travado ? 'opacity-70' : 'active:scale-[0.99]',
                   )}
                 >
-                  <span className={cn('flex size-9 items-center justify-center rounded-xl bg-secondary', p.classe)}>
+                  <span
+                    className={cn(
+                      'flex size-9 items-center justify-center rounded-xl bg-secondary',
+                      p.classe,
+                    )}
+                  >
                     <Icone className="size-4" />
                   </span>
                   <span className="flex-1">
                     <span className="block text-sm font-semibold">{p.label}</span>
-                    <span className="block text-xs text-muted-foreground">{descricaoPapel(p.valor)}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {descricaoPapel(p.valor)}
+                    </span>
                   </span>
                   <span
                     className={cn(
@@ -248,55 +259,14 @@ export function UsuariosPage() {
             </p>
           </div>
 
-          <DialogFooter className="flex-col gap-2 sm:flex-col">
-            <Button className="w-full" onClick={salvarPapeis}>
-              <Check />
-              Salvar
-            </Button>
-            {emEdicao && emEdicao.id !== fundador && emEdicao.id !== eu?.id && (
-              <Button
-                variant="ghost"
-                className="w-full text-destructive"
-                onClick={() => {
-                  setParaExcluir(emEdicao)
-                  setEmEdicao(null)
-                }}
-              >
-                <Trash2 />
-                Remover cadastro
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmar exclusão */}
-      <Dialog open={!!paraExcluir} onOpenChange={(v) => !v && setParaExcluir(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remover {paraExcluir?.nome}?</DialogTitle>
-            <DialogDescription>
-              A pessoa perde o acesso em todos os aparelhos assim que eles sincronizarem. Os
-              lançamentos que ela registrou continuam no histórico.
-            </DialogDescription>
-          </DialogHeader>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary">Cancelar</Button>
-            </DialogClose>
-            <Button variant="destructive" onClick={() => paraExcluir && excluir(paraExcluir)}>
-              <Trash2 />
-              Remover
+            <Button className="w-full" onClick={salvar} disabled={salvando}>
+              <Check />
+              {salvando ? 'Salvando…' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
-}
-
-function descricaoPapel(papel: Papel): string {
-  if (papel === 'pastor') return 'Vê tudo, edita a igreja e define papéis.'
-  if (papel === 'tesoureiro') return 'Lança entradas, saídas e contas a pagar.'
-  return 'Acompanha a prestação de contas e a própria contribuição.'
 }

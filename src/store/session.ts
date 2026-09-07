@@ -1,55 +1,18 @@
 import { create } from 'zustand'
-import { db } from '@/data/db'
-import { services, setAuditUser } from '@/data/services'
+import { supabase } from '@/lib/supabase'
+import { setAuditUser } from '@/data/services'
+import { desligarTempoReal, ligarTempoReal, useData } from '@/store/data'
 import type { Papel, Usuario } from '@/data/types'
-import { ehEmailDono, PAPEIS_DEUS, papeisDoUsuario } from '@/sync/dono'
+import { ehEmailDono, PAPEIS_DEUS, papeisDoUsuario } from '@/lib/papeis'
 import { getStoredTheme, setTheme as applyStoredTheme, type Theme } from '@/lib/theme'
 import { hasPin, verifyPin } from '@/lib/prefs'
 import { monthPeriod, type Period } from '@/lib/report'
-import {
-  cifrarComSenha,
-  comparaSegura,
-  decifrarComSenha,
-  gerarParDeChaves,
-  hashSenha,
-  idAleatorio,
-  novoSal,
-  temCriptografia,
-} from '@/sync/crypto'
-import { guardarChave, lerChave } from '@/sync/identidade'
-import * as motor from '@/sync/motor'
 
-const USER_KEY = 'rebanho-usuario'
-const PAPEL_DEUS_KEY = 'rebanho-papel-deus'
+const PAPEL_ATIVO_KEY = 'rebanho-papel-ativo'
 
 export interface Resultado {
   ok: boolean
   erro?: string
-}
-
-interface EstadoPapel {
-  ehDono: boolean
-  /** Papéis pelos quais este usuário pode navegar (o dono navega por todos). */
-  papeisDisponiveis: Papel[]
-  /** Papel pelo qual a interface se comporta agora. */
-  papelAtivo: Papel
-}
-
-/**
- * Estado de papel do usuário logado.
- *
- * Um usuário pode acumular papéis (pastor E tesoureiro) e alternar entre eles;
- * o dono navega por todos. `papelAtivo` é o papel em uso no momento — de
- * preferência o que estava salvo, senão o principal.
- */
-function estadoDePapel(user: Usuario | null): EstadoPapel {
-  if (!user) return { ehDono: false, papeisDisponiveis: ['irmao'], papelAtivo: 'irmao' }
-  const ehDono = ehEmailDono(user.email)
-  const papeisDisponiveis = ehDono ? PAPEIS_DEUS : papeisDoUsuario(user)
-  const salvo = localStorage.getItem(PAPEL_DEUS_KEY) as Papel | null
-  const papelAtivo =
-    salvo && papeisDisponiveis.includes(salvo) ? salvo : (papeisDisponiveis[0] ?? 'irmao')
-  return { ehDono, papeisDisponiveis, papelAtivo }
 }
 
 interface DadosCadastro {
@@ -58,27 +21,45 @@ interface DadosCadastro {
   senha: string
 }
 
+interface EstadoPapel {
+  ehDono: boolean
+  papeisDisponiveis: Papel[]
+  papelAtivo: Papel
+}
+
+/**
+ * Papéis do usuário logado.
+ *
+ * Uma pessoa pode acumular papéis (pastor E tesoureiro) e alternar entre eles;
+ * o dono navega por todos. `papelAtivo` é o papel em uso agora — de preferência
+ * o que ficou salvo, senão o principal.
+ */
+function estadoDePapel(user: Usuario | null): EstadoPapel {
+  if (!user) return { ehDono: false, papeisDisponiveis: ['irmao'], papelAtivo: 'irmao' }
+  const ehDono = ehEmailDono(user.email)
+  const papeisDisponiveis = ehDono ? PAPEIS_DEUS : papeisDoUsuario(user)
+  const salvo = localStorage.getItem(PAPEL_ATIVO_KEY) as Papel | null
+  const papelAtivo =
+    salvo && papeisDisponiveis.includes(salvo) ? salvo : (papeisDisponiveis[0] ?? 'irmao')
+  return { ehDono, papeisDisponiveis, papelAtivo }
+}
+
 interface SessionState {
   user: Usuario | null
-  /** Conta de manutenção do dono do app (acesso total, oculto dos demais). */
+  /** Conta de manutenção do dono (acesso total, oculta das listas). */
   ehDono: boolean
-  /** Papéis pelos quais este usuário pode navegar. */
   papeisDisponiveis: Papel[]
-  /** Papel pelo qual a interface se comporta. */
   papelAtivo: Papel
   theme: Theme
   period: Period
   locked: boolean
-  /** Verdadeiro enquanto o log ainda está sendo lido do disco. */
+  /** Verdadeiro enquanto a sessão está sendo restaurada. */
   carregando: boolean
-  /** Verdadeiro enquanto o login aguarda o cadastro chegar pela malha. */
-  sincronizando: boolean
 
   iniciar: () => Promise<void>
   cadastrar: (dados: DadosCadastro) => Promise<Resultado>
   login: (email: string, senha: string) => Promise<Resultado>
-  logout: () => void
-  /** Passa a navegar por outro dos papéis disponíveis (sem alterar o papel real). */
+  logout: () => Promise<void>
   entrarComoPapel: (papel: Papel) => void
   setTheme: (t: Theme) => void
   setPeriod: (p: Period) => void
@@ -86,61 +67,15 @@ interface SessionState {
   lock: () => void
 }
 
-/** Fundos iniciais — a igreja precisa de pelo menos um lugar para o dinheiro. */
-const FUNDOS_INICIAIS = [
-  { id: 'f-geral', nome: 'Caixa geral', descricao: 'Dízimos e ofertas do dia a dia', cor: 'var(--chart-1)' },
-  { id: 'f-missoes', nome: 'Missões', descricao: 'Ofertas destinadas a missões', cor: 'var(--chart-2)' },
-  { id: 'f-obras', nome: 'Obras', descricao: 'Construção e reformas do templo', cor: 'var(--chart-3)' },
-]
-
-function guardarUsuarioLocal(id: string) {
-  localStorage.setItem(USER_KEY, id)
-}
-
-function emailIgual(a: string, b: string) {
-  return a.trim().toLowerCase() === b.trim().toLowerCase()
-}
-
-/**
- * Espera um cadastro chegar pela malha.
- *
- * Num aparelho novo o log começa vazio e a descoberta P2P leva de alguns
- * segundos a cerca de um minuto. Sem esta espera, quem tenta entrar logo ao
- * abrir recebe "e-mail não encontrado" e acha que perdeu os dados.
- */
-function esperarCadastro(email: string, ms: number): Promise<Usuario | null> {
-  const achar = () => db.usuarios.find((u) => emailIgual(u.email, email)) ?? null
-  const agora = achar()
-  if (agora) return Promise.resolve(agora)
-  return new Promise((resolve) => {
-    const parar = motor.inscrever(() => {
-      const achado = achar()
-      if (!achado) return
-      parar()
-      clearTimeout(prazo)
-      resolve(achado)
-    })
-    const prazo = setTimeout(() => {
-      parar()
-      resolve(null)
-    }, ms)
-  })
-}
-
-/** Coloca o usuário no ar: define quem assina, avisa a auditoria e conecta. */
-async function entrar(usuario: Usuario, privada: string, publica: string) {
-  motor.definirAutor({
-    usuarioId: usuario.id,
-    privada,
-    publica,
-    nome: usuario.nome,
-    papel: usuario.papel,
-  })
-  setAuditUser(usuario.nome)
-  await guardarChave(usuario.id, privada, publica)
-  guardarUsuarioLocal(usuario.id)
-  // A malha é única e fixa: todo aparelho do app pertence a esta igreja.
-  motor.conectar()
+/** Traduz os erros do Supabase Auth para algo que a pessoa entenda. */
+function mensagemDeErro(msg: string): string {
+  if (/Invalid login credentials/i.test(msg)) return 'E-mail ou senha incorretos.'
+  if (/Email not confirmed/i.test(msg)) return 'Confirme seu e-mail antes de entrar.'
+  if (/already registered|already exists/i.test(msg)) return 'Já existe uma conta com este e-mail.'
+  if (/Password should be at least/i.test(msg)) return 'A senha precisa de ao menos 6 caracteres.'
+  if (/rate limit|too many/i.test(msg)) return 'Muitas tentativas. Aguarde um instante.'
+  if (/fetch|network/i.test(msg)) return 'Sem conexão com o servidor da igreja.'
+  return msg
 }
 
 export const useSession = create<SessionState>((set, get) => ({
@@ -152,186 +87,118 @@ export const useSession = create<SessionState>((set, get) => ({
   period: monthPeriod(),
   locked: hasPin(),
   carregando: true,
-  sincronizando: false,
 
-  /** Lê o log do disco e restaura a sessão anterior, se houver. */
+  /** Restaura a sessão salva e carrega os dados da igreja. */
   iniciar: async () => {
-    await motor.iniciar()
+    const { data } = await supabase.auth.getSession()
 
-    // A malha entra no ar já na abertura, mesmo sem ninguém logado: assim um
-    // aparelho novo recebe os cadastros existentes e consegue fazer login sem
-    // ter guardado nada antes — os dados vêm dos outros aparelhos.
-    motor.conectar()
-
-    const id = localStorage.getItem(USER_KEY)
-    const chave = await lerChave()
-    const usuario = id ? (db.usuarios.find((u) => u.id === id) ?? null) : null
-
-    if (usuario && chave?.usuarioId === usuario.id) {
-      await entrar(usuario, chave.privada, chave.publica)
-      set({ user: usuario, ...estadoDePapel(usuario) })
+    async function aplicarSessao(uid: string | null) {
+      if (!uid) {
+        desligarTempoReal()
+        set({ user: null, ...estadoDePapel(null), carregando: false })
+        return
+      }
+      await useData.getState().recarregar()
+      const perfil = useData.getState().usuarios.find((u) => u.id === uid) ?? null
+      if (perfil) setAuditUser(perfil.nome)
+      ligarTempoReal()
+      set({ user: perfil, ...estadoDePapel(perfil), carregando: false })
     }
 
-    // Os papéis podem mudar pela rede: o pastor promove alguém e a alteração
-    // chega enquanto a pessoa está com o app aberto.
-    motor.inscrever(() => {
-      const atual = get().user
-      if (!atual) return
-      const atualizado = db.usuarios.find((u) => u.id === atual.id)
-      if (!atualizado) return
-      const mudouPapeis =
-        JSON.stringify(papeisDoUsuario(atualizado)) !== JSON.stringify(papeisDoUsuario(atual))
-      if (mudouPapeis || atualizado.nome !== atual.nome) {
-        motor.definirAutor({
-          usuarioId: atualizado.id,
-          privada: motor.autorAtual()?.privada ?? '',
-          publica: motor.autorAtual()?.publica ?? '',
-          nome: atualizado.nome,
-          papel: atualizado.papel,
-        })
-        setAuditUser(atualizado.nome)
-        // Recalcula os papéis disponíveis mantendo, se possível, o papel em uso.
-        const estado = estadoDePapel(atualizado)
-        const manterAtivo = estado.papeisDisponiveis.includes(get().papelAtivo)
-        set({
-          user: atualizado,
-          ehDono: estado.ehDono,
-          papeisDisponiveis: estado.papeisDisponiveis,
-          papelAtivo: manterAtivo ? get().papelAtivo : estado.papelAtivo,
-        })
-      }
+    await aplicarSessao(data.session?.user.id ?? null)
+
+    // Login, logout e renovação de token chegam por aqui — inclusive quando
+    // acontecem em outra aba do mesmo navegador.
+    supabase.auth.onAuthStateChange((evento, sessao) => {
+      if (evento === 'SIGNED_OUT') void aplicarSessao(null)
+      else if (evento === 'SIGNED_IN') void aplicarSessao(sessao?.user.id ?? null)
     })
 
-    set({ carregando: false })
+    // O papel pode mudar enquanto a pessoa usa o app (o pastor promoveu
+    // alguém): quando a lista de usuários muda, revemos o papel do logado.
+    useData.subscribe(() => {
+      const atual = get().user
+      if (!atual) return
+      const novo = useData.getState().usuarios.find((u) => u.id === atual.id)
+      if (!novo) return
+      const mudou =
+        JSON.stringify(papeisDoUsuario(novo)) !== JSON.stringify(papeisDoUsuario(atual)) ||
+        novo.nome !== atual.nome ||
+        novo.cargo !== atual.cargo
+      if (!mudou) return
+      setAuditUser(novo.nome)
+      const estado = estadoDePapel(novo)
+      const manter = estado.papeisDisponiveis.includes(get().papelAtivo)
+      set({
+        user: novo,
+        ehDono: estado.ehDono,
+        papeisDisponiveis: estado.papeisDisponiveis,
+        papelAtivo: manter ? get().papelAtivo : estado.papelAtivo,
+      })
+    })
   },
 
   cadastrar: async ({ nome, email, senha }) => {
-    if (!temCriptografia()) {
-      return { ok: false, erro: 'O cadastro exige uma conexão segura (https).' }
-    }
     if (nome.trim().length < 3) return { ok: false, erro: 'Informe o nome completo.' }
     if (senha.length < 6) return { ok: false, erro: 'A senha precisa de ao menos 6 caracteres.' }
-    if (db.usuarios.some((u) => emailIgual(u.email, email))) {
-      return { ok: false, erro: 'Já existe um cadastro com este e-mail.' }
-    }
 
-    // O primeiro cadastro da igreja é o pastor. Todos os seguintes entram como
-    // membros — quem decide isso é a projeção do log, não este aparelho.
-    const primeiro = db.usuarios.length === 0
+    // Quem é pastor e quem é membro é decidido no banco (o primeiro cadastro
+    // vira pastor); o app só informa o nome.
+    const limpo = email.trim().toLowerCase()
+    const { data, error } = await supabase.auth.signUp({
+      email: limpo,
+      password: senha,
+      options: { data: { nome: nome.trim() } },
+    })
+    if (error) return { ok: false, erro: mensagemDeErro(error.message) }
 
-    const chaves = await gerarParDeChaves()
-    if (!chaves) return { ok: false, erro: 'Este navegador não suporta o cadastro seguro.' }
-
-    const sal = novoSal()
-    const hash = await hashSenha(senha, sal)
-    const chaveCifrada = await cifrarComSenha(chaves.privada, senha)
-    if (!chaveCifrada) return { ok: false, erro: 'Falha ao proteger a chave de acesso.' }
-
-    const usuarioId = `u-${idAleatorio(10)}`
-    const membroId = `m-${idAleatorio(10)}`
-
-    const usuario: Usuario = {
-      id: usuarioId,
-      nome: nome.trim(),
-      email: email.trim().toLowerCase(),
-      papel: primeiro ? 'pastor' : 'irmao',
-      membroId,
-      hash,
-      sal,
-      pub: chaves.publica,
-      chaveCifrada,
-      criadoEm: new Date().toISOString(),
-    }
-
-    const itens: { col: 'usuarios' | 'membros' | 'config' | 'fundos'; key: string; val: unknown }[] =
-      [
-        { col: 'usuarios', key: usuarioId, val: usuario },
-        {
-          col: 'membros',
-          key: membroId,
-          val: { id: membroId, nome: usuario.nome, email: usuario.email, ativo: true },
-        },
-      ]
-
-    await motor.registrarCadastro(usuarioId, chaves, itens)
-    await entrar(usuario, chaves.privada, chaves.publica)
-
-    // O fundador monta a base da igreja: dados e fundos iniciais. A conta do
-    // dono nunca funda (é sempre membro), então não dispara essa preparação.
-    if (primeiro && !ehEmailDono(usuario.email)) {
-      services.saveConfig({
-        nome: 'Minha igreja',
-        razaoSocial: '',
-        pastor: usuario.nome,
-        fundacao: String(new Date().getFullYear()),
-      })
-      for (const f of FUNDOS_INICIAIS) {
-        motor.gravar('fundos', f.id, f)
+    // O e-mail já é confirmado no banco (gatilho), então o cadastro entra
+    // direto. Se por algum motivo o signUp não trouxe sessão, fazemos o login
+    // na hora — a pessoa nunca precisa esperar um e-mail.
+    let uid = data.session?.user.id ?? null
+    if (!data.session) {
+      const entrada = await supabase.auth.signInWithPassword({ email: limpo, password: senha })
+      if (entrada.error) {
+        return {
+          ok: false,
+          erro: 'Conta criada. Agora entre com seu e-mail e senha.',
+        }
       }
+      uid = entrada.data.user.id
     }
 
-    const projetado = db.usuarios.find((u) => u.id === usuarioId) ?? usuario
-    set({ user: projetado, ...estadoDePapel(projetado) })
+    await useData.getState().recarregar()
+    const perfil = useData.getState().usuarios.find((u) => u.id === uid) ?? null
+    if (perfil) setAuditUser(perfil.nome)
+    ligarTempoReal()
+    set({ user: perfil, ...estadoDePapel(perfil) })
     return { ok: true }
   },
 
   login: async (email, senha) => {
-    let usuario = db.usuarios.find((u) => emailIgual(u.email, email)) ?? null
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password: senha,
+    })
+    if (error) return { ok: false, erro: mensagemDeErro(error.message) }
 
-    // Aparelho ainda sem nenhum cadastro: o dado pode estar a caminho pela
-    // malha, então damos tempo de ele chegar antes de dizer que não existe.
-    // Quando já há cadastros aqui e o e-mail não bate, é engano de digitação —
-    // aí responde na hora.
-    if (!usuario && db.usuarios.length === 0) {
-      set({ sincronizando: true })
-      usuario = await esperarCadastro(email, 45_000)
-      set({ sincronizando: false })
-    }
-
-    if (!usuario) {
-      return {
-        ok: false,
-        erro: db.usuarios.length
-          ? 'E-mail não encontrado. Confira se digitou certo.'
-          : 'Nenhum cadastro chegou a este aparelho. Peça para alguém da igreja abrir o app ao mesmo tempo — ou crie seu cadastro aqui.',
-      }
-    }
-    if (!usuario.sal || !usuario.hash) return { ok: false, erro: 'Cadastro incompleto.' }
-
-    const hash = await hashSenha(senha, usuario.sal)
-    if (!comparaSegura(hash, usuario.hash)) return { ok: false, erro: 'Senha incorreta.' }
-
-    // A chave privada vem cifrada no próprio cadastro, então a conta funciona
-    // em qualquer aparelho — basta a senha para abri-la.
-    const local = await lerChave()
-    let privada = local?.usuarioId === usuario.id ? local.privada : null
-    if (!privada && usuario.chaveCifrada) {
-      privada = await decifrarComSenha(usuario.chaveCifrada, senha)
-    }
-    if (!privada || !usuario.pub) {
-      return {
-        ok: false,
-        erro: 'Senha correta, mas não foi possível abrir a chave deste cadastro neste aparelho.',
-      }
-    }
-
-    await entrar(usuario, privada, usuario.pub)
-    set({ user: usuario, ...estadoDePapel(usuario) })
+    await useData.getState().recarregar()
+    const perfil = useData.getState().usuarios.find((u) => u.id === data.user.id) ?? null
+    if (perfil) setAuditUser(perfil.nome)
+    ligarTempoReal()
+    set({ user: perfil, ...estadoDePapel(perfil) })
     return { ok: true }
   },
 
-  logout: () => {
-    // Não apagamos nem o log nem a chave: os dados ficam no aparelho e na
-    // malha, e a chave só se abre com a senha de qualquer jeito. Guardá-la
-    // evita o caso em que a pessoa sai e não consegue mais voltar.
-    localStorage.removeItem(USER_KEY)
-    motor.limparAutor()
+  logout: async () => {
+    desligarTempoReal()
+    await supabase.auth.signOut()
     set({ user: null, ehDono: false, papeisDisponiveis: ['irmao'], papelAtivo: 'irmao' })
   },
 
   entrarComoPapel: (papel) => {
     if (!get().papeisDisponiveis.includes(papel)) return
-    localStorage.setItem(PAPEL_DEUS_KEY, papel)
+    localStorage.setItem(PAPEL_ATIVO_KEY, papel)
     set({ papelAtivo: papel })
   },
 
@@ -339,9 +206,7 @@ export const useSession = create<SessionState>((set, get) => ({
     applyStoredTheme(t)
     set({ theme: t })
   },
-
   setPeriod: (p) => set({ period: p }),
-
   unlock: (pin) => {
     if (verifyPin(pin)) {
       set({ locked: false })

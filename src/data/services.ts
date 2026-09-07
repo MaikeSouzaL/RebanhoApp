@@ -1,33 +1,40 @@
-import { nanoid } from 'nanoid'
-import { clone, db } from './db'
-import * as motor from '@/sync/motor'
-import { normalizarPapeis, papelPrincipal } from '@/sync/dono'
-import type { Colecao } from '@/sync/types'
+import { supabase } from '@/lib/supabase'
+import {
+  contaParaLinha,
+  entradaParaLinha,
+  membroParaLinha,
+  configParaLinha,
+  papelParaBanco,
+  saidaParaLinha,
+} from './api'
+import { normalizarPapeis } from '@/lib/papeis'
 import type {
   AcaoAudit,
   ConfigIgreja,
   ContaPagar,
-  Database,
   Entrada,
   Fundo,
   Membro,
   Papel,
   Relatorio,
   Saida,
-  Usuario,
 } from './types'
 
 /**
- * Camada de serviços. É o único ponto que escreve no banco.
+ * Camada de serviços: tudo o que escreve no banco passa por aqui.
  *
- * Cada função aqui vira uma operação assinada no log (`@/sync/motor`), que é
- * aplicada na hora neste aparelho e replicada para os outros quando houver
- * rede. Do ponto de vista das telas nada mudou: continuam chamando e lendo o
- * resultado imediatamente.
+ * Diferente da versão P2P, agora não existe "aplicar localmente e torcer": a
+ * escrita vai ao Postgres e as regras de permissão (RLS) decidem lá. Se a
+ * pessoa não pode, a operação falha — e falha alto, com mensagem.
  */
 
-function competenciaDe(dataIso: string): string {
-  return dataIso.slice(0, 7)
+function erro(acao: string, e: { message: string } | null): never {
+  const msg = e?.message ?? 'erro desconhecido'
+  // Mensagem do Postgres quando o RLS barra a operação.
+  if (/row-level security|permission denied/i.test(msg)) {
+    throw new Error(`Você não tem permissão para ${acao}.`)
+  }
+  throw new Error(`Não foi possível ${acao}: ${msg}`)
 }
 
 // ---- Auditoria ----
@@ -36,255 +43,215 @@ export function setAuditUser(nome: string) {
   auditUser = nome
 }
 
-function entradaDeAuditoria(acao: AcaoAudit, entidade: string, descricao: string, valor?: number) {
-  return {
-    id: `a-${nanoid(8)}`,
-    ts: new Date().toISOString(),
-    usuario: auditUser,
-    acao,
-    entidade,
-    descricao,
-    valor,
+/** Registra o rastro da ação. Nunca derruba a operação principal se falhar. */
+async function auditar(
+  acao: AcaoAudit,
+  entidade: string,
+  descricao: string,
+  valor?: number,
+): Promise<void> {
+  try {
+    await supabase.from('auditoria').insert({
+      usuario: auditUser,
+      acao,
+      entidade,
+      descricao,
+      valor: valor ?? null,
+    })
+  } catch {
+    /* o diário é secundário — não vale perder o lançamento por causa dele */
   }
-}
-
-/** Grava um registro e o rastro correspondente no diário, num lote só. */
-function gravarCom(
-  col: Colecao,
-  key: string,
-  val: unknown,
-  acao: AcaoAudit,
-  entidade: string,
-  descricao: string,
-  valor?: number,
-): boolean {
-  const rastro = entradaDeAuditoria(acao, entidade, descricao, valor)
-  return motor.gravarLote([
-    { col, key, val },
-    { col: 'auditoria', key: rastro.id, val: rastro },
-  ])
-}
-
-function excluirCom(
-  col: Colecao,
-  key: string,
-  acao: AcaoAudit,
-  entidade: string,
-  descricao: string,
-  valor?: number,
-): boolean {
-  const rastro = entradaDeAuditoria(acao, entidade, descricao, valor)
-  motor.gravar('auditoria', rastro.id, rastro)
-  return motor.excluir(col, key)
 }
 
 const rotuloEntrada = (tipo: Entrada['tipo']) =>
   tipo === 'dizimo' ? 'dízimo' : tipo === 'oferta' ? 'oferta' : 'entrada'
 
 export const services = {
-  snapshot(): Database {
-    return clone(db)
+  // ---------- Entradas ----------
+  async addEntrada(input: Omit<Entrada, 'id' | 'competencia'>): Promise<Entrada> {
+    const { data, error } = await supabase
+      .from('entradas')
+      .insert(entradaParaLinha(input))
+      .select()
+      .single()
+    if (error) erro('registrar a entrada', error)
+    void auditar('criou', rotuloEntrada(input.tipo), input.subtipo ?? '', input.valor)
+    return { ...input, id: String(data.id), competencia: String(data.competencia) }
   },
 
-  // ---------- Entradas ----------
-  addEntrada(input: Omit<Entrada, 'id' | 'competencia'>): Entrada {
-    const entrada: Entrada = {
-      ...input,
-      id: `e-${nanoid(8)}`,
-      competencia: competenciaDe(input.data),
-    }
-    gravarCom(
-      'entradas',
-      entrada.id,
-      entrada,
-      'criou',
-      rotuloEntrada(entrada.tipo),
-      entrada.subtipo ?? '',
-      entrada.valor,
-    )
-    return clone(entrada)
+  async updateEntrada(id: string, patch: Partial<Entrada>): Promise<void> {
+    const { error } = await supabase.from('entradas').update(entradaParaLinha(patch)).eq('id', id)
+    if (error) erro('editar a entrada', error)
+    void auditar('editou', 'entrada', patch.subtipo ?? '', patch.valor)
   },
-  updateEntrada(id: string, patch: Partial<Entrada>): Entrada | null {
-    const atual = db.entradas.find((x) => x.id === id)
-    if (!atual) return null
-    const entrada: Entrada = { ...atual, ...patch }
-    if (patch.data) entrada.competencia = competenciaDe(patch.data)
-    gravarCom(
-      'entradas',
-      id,
-      entrada,
-      'editou',
-      rotuloEntrada(entrada.tipo),
-      entrada.subtipo ?? '',
-      entrada.valor,
-    )
-    return clone(entrada)
-  },
-  removeEntrada(id: string) {
-    const atual = db.entradas.find((x) => x.id === id)
-    if (!atual) return
-    excluirCom('entradas', id, 'excluiu', rotuloEntrada(atual.tipo), atual.subtipo ?? '', atual.valor)
+
+  async removeEntrada(id: string): Promise<void> {
+    const { error } = await supabase.from('entradas').delete().eq('id', id)
+    if (error) erro('excluir a entrada', error)
+    void auditar('excluiu', 'entrada', '')
   },
 
   // ---------- Saídas ----------
-  addSaida(input: Omit<Saida, 'id' | 'competencia'>): Saida {
-    const saida: Saida = { ...input, id: `s-${nanoid(8)}`, competencia: competenciaDe(input.data) }
-    gravarCom('saidas', saida.id, saida, 'criou', 'despesa', saida.descricao, saida.valor)
-    return clone(saida)
+  async addSaida(input: Omit<Saida, 'id' | 'competencia'>): Promise<Saida> {
+    const { data, error } = await supabase
+      .from('saidas')
+      .insert(saidaParaLinha(input))
+      .select()
+      .single()
+    if (error) erro('registrar a despesa', error)
+    void auditar('criou', 'despesa', input.descricao, input.valor)
+    return { ...input, id: String(data.id), competencia: String(data.competencia) }
   },
-  updateSaida(id: string, patch: Partial<Saida>): Saida | null {
-    const atual = db.saidas.find((x) => x.id === id)
-    if (!atual) return null
-    const saida: Saida = { ...atual, ...patch }
-    if (patch.data) saida.competencia = competenciaDe(patch.data)
-    gravarCom('saidas', id, saida, 'editou', 'despesa', saida.descricao, saida.valor)
-    return clone(saida)
+
+  async updateSaida(id: string, patch: Partial<Saida>): Promise<void> {
+    const { error } = await supabase.from('saidas').update(saidaParaLinha(patch)).eq('id', id)
+    if (error) erro('editar a despesa', error)
+    void auditar('editou', 'despesa', patch.descricao ?? '', patch.valor)
   },
-  removeSaida(id: string) {
-    const atual = db.saidas.find((x) => x.id === id)
-    if (!atual) return
-    excluirCom('saidas', id, 'excluiu', 'despesa', atual.descricao, atual.valor)
+
+  async removeSaida(id: string): Promise<void> {
+    const { error } = await supabase.from('saidas').delete().eq('id', id)
+    if (error) erro('excluir a despesa', error)
+    void auditar('excluiu', 'despesa', '')
   },
 
   // ---------- Contas a pagar ----------
-  addConta(input: Omit<ContaPagar, 'id'>): ContaPagar {
-    const conta: ContaPagar = { ...input, id: `c-${nanoid(8)}` }
-    gravarCom('contasPagar', conta.id, conta, 'criou', 'conta a pagar', conta.descricao, conta.valor)
-    return clone(conta)
+  async addConta(input: Omit<ContaPagar, 'id'>): Promise<void> {
+    const { error } = await supabase.from('contas_pagar').insert(contaParaLinha(input))
+    if (error) erro('criar a conta', error)
+    void auditar('criou', 'conta a pagar', input.descricao, input.valor)
   },
-  updateConta(id: string, patch: Partial<ContaPagar>): ContaPagar | null {
-    const atual = db.contasPagar.find((c) => c.id === id)
-    if (!atual) return null
-    const conta: ContaPagar = { ...atual, ...patch }
-    gravarCom('contasPagar', id, conta, 'editou', 'conta a pagar', conta.descricao, conta.valor)
-    return clone(conta)
+
+  async updateConta(id: string, patch: Partial<ContaPagar>): Promise<void> {
+    const { error } = await supabase.from('contas_pagar').update(contaParaLinha(patch)).eq('id', id)
+    if (error) erro('editar a conta', error)
+    void auditar('editou', 'conta a pagar', patch.descricao ?? '', patch.valor)
   },
-  /** Marca uma conta como paga e gera a saída correspondente. */
-  pagarConta(id: string, dataPagamento: string): { conta: ContaPagar; saida: Saida } | null {
-    const atual = db.contasPagar.find((c) => c.id === id)
-    if (!atual) return null
-    const saida = services.addSaida({
-      categoria: atual.categoria,
-      descricao: atual.descricao,
-      fornecedor: atual.fornecedor,
-      valor: atual.valor,
+
+  /** Marca a conta como paga e gera a despesa correspondente. */
+  async pagarConta(id: string, dataPagamento: string): Promise<void> {
+    const { data: conta, error: e1 } = await supabase
+      .from('contas_pagar')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (e1) erro('encontrar a conta', e1)
+
+    const saida = await services.addSaida({
+      categoria: conta.categoria,
+      descricao: conta.descricao,
+      fornecedor: conta.fornecedor ?? undefined,
+      valor: Number(conta.valor),
       data: dataPagamento,
       forma: 'pix',
-      fundoId: atual.fundoId,
+      fundoId: conta.fundo_id ?? '',
       comprovante: true,
     })
-    const conta: ContaPagar = { ...atual, status: 'pago', pagoEm: dataPagamento, saidaId: saida.id }
-    gravarCom('contasPagar', id, conta, 'pagou', 'conta a pagar', conta.descricao, conta.valor)
-    return { conta: clone(conta), saida }
+
+    const { error: e2 } = await supabase
+      .from('contas_pagar')
+      .update({ status: 'pago', pago_em: dataPagamento, saida_id: saida.id })
+      .eq('id', id)
+    if (e2) erro('baixar a conta', e2)
+    void auditar('pagou', 'conta a pagar', conta.descricao, Number(conta.valor))
   },
 
   // ---------- Membros ----------
-  addMembro(input: Omit<Membro, 'id'>): Membro {
-    const membro: Membro = { ...input, id: `m-${nanoid(8)}` }
-    gravarCom('membros', membro.id, membro, 'criou', 'membro', membro.nome)
-    return clone(membro)
+  async addMembro(input: Omit<Membro, 'id'>): Promise<void> {
+    const { error } = await supabase.from('membros').insert(membroParaLinha(input))
+    if (error) erro('cadastrar o membro', error)
+    void auditar('criou', 'membro', input.nome)
   },
-  updateMembro(id: string, patch: Partial<Membro>): Membro | null {
-    const atual = db.membros.find((m) => m.id === id)
-    if (!atual) return null
-    const membro: Membro = { ...atual, ...patch }
-    gravarCom('membros', id, membro, 'editou', 'membro', membro.nome)
-    return clone(membro)
+
+  async updateMembro(id: string, patch: Partial<Membro>): Promise<void> {
+    const { error } = await supabase.from('membros').update(membroParaLinha(patch)).eq('id', id)
+    if (error) erro('editar o membro', error)
+    void auditar('editou', 'membro', patch.nome ?? '')
   },
-  removeMembro(id: string) {
-    const atual = db.membros.find((m) => m.id === id)
-    if (!atual) return
-    excluirCom('membros', id, 'excluiu', 'membro', atual.nome)
+
+  async removeMembro(id: string): Promise<void> {
+    const { error } = await supabase.from('membros').delete().eq('id', id)
+    if (error) erro('excluir o membro', error)
+    void auditar('excluiu', 'membro', '')
   },
 
   // ---------- Fundos ----------
-  addFundo(input: Omit<Fundo, 'id'>): Fundo {
-    const fundo: Fundo = { ...input, id: `f-${nanoid(6)}` }
-    gravarCom('fundos', fundo.id, fundo, 'criou', 'fundo', fundo.nome)
-    return clone(fundo)
-  },
-  updateFundo(id: string, patch: Partial<Fundo>): Fundo | null {
-    const atual = db.fundos.find((f) => f.id === id)
-    if (!atual) return null
-    const fundo: Fundo = { ...atual, ...patch }
-    gravarCom('fundos', id, fundo, 'editou', 'fundo', fundo.nome)
-    return clone(fundo)
+  async addFundo(input: Omit<Fundo, 'id'>): Promise<void> {
+    const { error } = await supabase.from('fundos').insert({
+      nome: input.nome,
+      descricao: input.descricao,
+      cor: input.cor,
+      meta: input.meta ?? null,
+    })
+    if (error) erro('criar o fundo', error)
+    void auditar('criou', 'fundo', input.nome)
   },
 
-  // ---------- Usuários e papéis ----------
+  async updateFundo(id: string, patch: Partial<Fundo>): Promise<void> {
+    const { error } = await supabase
+      .from('fundos')
+      .update({
+        ...(patch.nome !== undefined ? { nome: patch.nome } : {}),
+        ...(patch.descricao !== undefined ? { descricao: patch.descricao } : {}),
+        ...(patch.cor !== undefined ? { cor: patch.cor } : {}),
+        ...(patch.meta !== undefined ? { meta: patch.meta ?? null } : {}),
+      })
+      .eq('id', id)
+    if (error) erro('editar o fundo', error)
+    void auditar('editou', 'fundo', patch.nome ?? '')
+  },
+
+  // ---------- Usuários, papéis e cargo ----------
   /**
-   * Só o pastor consegue mudar papéis: a operação vai assinada e os outros
-   * aparelhos recusam a mudança se a assinatura não for de um pastor. Um
-   * usuário pode receber mais de um papel (pastor E tesoureiro, por exemplo).
+   * Troca os papéis de alguém. Só o pastor consegue: o banco recusa a escrita
+   * de qualquer outro, e um gatilho impede a igreja de ficar sem pastor.
    */
-  definirPapeis(usuarioId: string, papeis: Papel[], cargo?: string): Usuario | null {
-    const atual = db.usuarios.find((u) => u.id === usuarioId)
-    if (!atual) return null
-    const norm = normalizarPapeis(papeis)
-    const usuario: Usuario = {
-      ...atual,
-      papeis: norm,
-      papel: papelPrincipal(norm),
-      cargo: cargo?.trim() || atual.cargo,
+  async definirPapeis(usuarioId: string, papeis: Papel[], cargo?: string): Promise<void> {
+    const alvo = normalizarPapeis(papeis)
+
+    const { error: e1 } = await supabase.from('user_roles').delete().eq('user_id', usuarioId)
+    if (e1) erro('alterar os acessos', e1)
+
+    const { error: e2 } = await supabase
+      .from('user_roles')
+      .insert(alvo.map((p) => ({ user_id: usuarioId, papel: papelParaBanco(p) })))
+    if (e2) erro('alterar os acessos', e2)
+
+    if (cargo !== undefined) {
+      const { error: e3 } = await supabase
+        .from('profiles')
+        .update({ cargo: cargo.trim() || 'Membro' })
+        .eq('id', usuarioId)
+      if (e3) erro('definir o cargo', e3)
     }
-    const nomes = norm.map((p) => (p === 'pastor' ? 'pastor' : p === 'tesoureiro' ? 'tesoureiro' : 'membro'))
-    gravarCom('usuarios', usuarioId, usuario, 'editou', 'usuário', `${atual.nome}: ${nomes.join(' + ')}`)
-    return clone(usuario)
+    void auditar('editou', 'usuário', `acessos: ${alvo.join(' + ')}`)
   },
-  updateUsuario(id: string, patch: Partial<Usuario>): Usuario | null {
-    const atual = db.usuarios.find((u) => u.id === id)
-    if (!atual) return null
-    const usuario: Usuario = { ...atual, ...patch }
-    gravarCom('usuarios', id, usuario, 'editou', 'usuário', usuario.nome)
-    return clone(usuario)
-  },
-  removeUsuario(id: string) {
-    const atual = db.usuarios.find((u) => u.id === id)
-    if (!atual) return
-    excluirCom('usuarios', id, 'excluiu', 'usuário', atual.nome)
+
+  async updatePerfil(id: string, patch: { nome?: string; cargo?: string }): Promise<void> {
+    const { error } = await supabase.from('profiles').update(patch).eq('id', id)
+    if (error) erro('editar o perfil', error)
   },
 
   // ---------- Config ----------
-  saveConfig(patch: Partial<ConfigIgreja>): ConfigIgreja {
-    const config: ConfigIgreja = { ...db.config, ...patch }
-    gravarCom('config', 'igreja', config, 'editou', 'configurações', 'dados da igreja')
-    return clone(config)
+  async saveConfig(patch: Partial<ConfigIgreja>): Promise<void> {
+    const { error } = await supabase
+      .from('config_igreja')
+      .update(configParaLinha(patch))
+      .eq('id', true)
+    if (error) erro('salvar os dados da igreja', error)
+    void auditar('editou', 'configurações', 'dados da igreja')
   },
 
   // ---------- Relatórios ----------
-  addRelatorio(input: Omit<Relatorio, 'id' | 'geradoEm'>): Relatorio {
-    const rel: Relatorio = { ...input, id: `r-${nanoid(8)}`, geradoEm: new Date().toISOString() }
-    gravarCom('relatorios', rel.id, rel, 'gerou', 'relatório', rel.titulo)
-    return clone(rel)
-  },
-
-  // ---------- Backup ----------
-  /**
-   * Traz de volta um backup em JSON. Cada registro vira uma operação nova, com
-   * o horário de agora — então o backup vence o que já estava lá, e a
-   * restauração se propaga para os outros aparelhos como qualquer alteração.
-   */
-  importBackup(data: Database) {
-    const itens: { col: Colecao; key: string; val: unknown }[] = []
-    if (data.config) itens.push({ col: 'config', key: 'igreja', val: data.config })
-    const listas: [Colecao, { id: string }[]][] = [
-      ['membros', data.membros ?? []],
-      ['fundos', data.fundos ?? []],
-      ['entradas', data.entradas ?? []],
-      ['saidas', data.saidas ?? []],
-      ['contasPagar', data.contasPagar ?? []],
-      ['relatorios', data.relatorios ?? []],
-    ]
-    for (const [col, lista] of listas) {
-      for (const item of lista) itens.push({ col, key: item.id, val: item })
-    }
-    const rastro = entradaDeAuditoria('importou', 'backup', 'dados restaurados de backup')
-    itens.push({ col: 'auditoria', key: rastro.id, val: rastro })
-    motor.gravarLote(itens)
-  },
-
-  /** Apaga o log deste aparelho por completo (cadastros inclusive). */
-  async reset() {
-    await motor.apagarTudo()
+  async addRelatorio(input: Omit<Relatorio, 'id' | 'geradoEm'>): Promise<void> {
+    const { error } = await supabase.from('relatorios').insert({
+      titulo: input.titulo,
+      tipo: input.tipo,
+      periodo_inicio: input.periodoInicio,
+      periodo_fim: input.periodoFim,
+      gerado_por: input.geradoPor,
+    })
+    if (error) erro('salvar o relatório', error)
+    void auditar('gerou', 'relatório', input.titulo)
   },
 }

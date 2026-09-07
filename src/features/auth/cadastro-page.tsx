@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Church, Loader2, ShieldCheck, UserPlus } from 'lucide-react'
@@ -6,26 +6,35 @@ import { Emblem } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useData } from '@/store/data'
+import { supabase } from '@/lib/supabase'
 import { useSession } from '@/store/session'
 import { toast } from 'sonner'
 
 export function CadastroPage() {
   const navigate = useNavigate()
   const { cadastrar, user, carregando } = useSession()
-  const totalUsuarios = useData((s) => s.usuarios.length)
 
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // `null` enquanto não sabemos; evita prometer "você será o pastor" à toa.
+  const [temPastor, setTemPastor] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let vivo = true
+    void supabase.rpc('existe_pastor').then(({ data }) => {
+      if (vivo) setTemPastor(data === true)
+    })
+    return () => {
+      vivo = false
+    }
+  }, [])
 
   if (user) return <Navigate to="/" replace />
   if (carregando) return null
 
-  // Sem nenhum cadastro ainda, este será o pastor. Depois disso, só membros —
-  // e o convite a "ser pastor" desaparece.
-  const seraPastor = totalUsuarios === 0
+  const seraPastor = temPastor === false
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault()
@@ -63,25 +72,27 @@ export function CadastroPage() {
           onSubmit={enviar}
           className="mt-6 space-y-4 rounded-3xl border border-border bg-card/90 p-5 shadow-warm backdrop-blur"
         >
-          <div
-            className={
-              'flex items-start gap-2.5 rounded-2xl border border-dashed p-3 text-sm ' +
-              (seraPastor
-                ? 'border-primary/40 bg-primary/5 text-foreground'
-                : 'border-border bg-secondary/40 text-muted-foreground')
-            }
-          >
-            {seraPastor ? (
-              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            ) : (
-              <Church className="mt-0.5 size-4 shrink-0" />
-            )}
-            <span>
-              {seraPastor
-                ? 'Este é o primeiro cadastro da igreja — você entra como pastor e passa a definir os papéis dos demais.'
-                : 'Seu cadastro entra como membro da igreja. O pastor pode torná-lo tesoureiro depois.'}
-            </span>
-          </div>
+          {temPastor !== null && (
+            <div
+              className={
+                'flex items-start gap-2.5 rounded-2xl border border-dashed p-3 text-sm ' +
+                (seraPastor
+                  ? 'border-primary/40 bg-primary/5 text-foreground'
+                  : 'border-border bg-secondary/40 text-muted-foreground')
+              }
+            >
+              {seraPastor ? (
+                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+              ) : (
+                <Church className="mt-0.5 size-4 shrink-0" />
+              )}
+              <span>
+                {seraPastor
+                  ? 'Este é o primeiro cadastro da igreja — você entra como pastor e passa a definir os acessos dos demais.'
+                  : 'Seu cadastro entra como membro da igreja. O pastor pode torná-lo tesoureiro depois.'}
+              </span>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="nome">Nome completo</Label>
@@ -114,9 +125,6 @@ export function CadastroPage() {
               placeholder="Ao menos 6 caracteres"
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground">
-              A senha abre sua chave de acesso — com ela você entra em qualquer aparelho.
-            </p>
           </div>
 
           <Button type="submit" size="lg" className="w-full" disabled={enviando}>

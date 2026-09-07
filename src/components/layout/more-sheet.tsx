@@ -15,13 +15,11 @@ import {
   Sun,
   Users,
   Wallet,
-  Wifi,
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Switch } from '@/components/ui/switch'
 import { useSession } from '@/store/session'
-import { useRede } from '@/store/rede'
 import { appInstalado, pedirInstalacao } from '@/components/shared/install-prompt'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -38,20 +36,17 @@ const CONTRIBUIR: Link = { to: '/contribuir', label: 'Contribuir', desc: 'Chave 
 const ANIVERSARIOS: Link = { to: '/aniversariantes', label: 'Aniversariantes', desc: 'Do mês', icon: Cake }
 const ATIVIDADE: Link = { to: '/atividade', label: 'Atividade', desc: 'Histórico de ações', icon: History }
 const USUARIOS: Link = { to: '/usuarios', label: 'Usuários', desc: 'Definir pastores e tesoureiros', icon: ShieldCheck }
-const REDE: Link = { to: '/rede', label: 'Rede da igreja', desc: 'Aparelhos conectados e sincronização', icon: Wifi }
 
 function linksForRole(papel: Papel | undefined): Link[] {
-  if (papel === 'irmao') return [CONTRIBUIR, FUNDOS, REDE, CONFIG, STYLE]
-  if (papel === 'pastor') return [USUARIOS, MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, REDE, CONFIG, STYLE]
-  return [MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, REDE, CONFIG, STYLE]
+  if (papel === 'irmao') return [CONTRIBUIR, FUNDOS, CONFIG, STYLE]
+  if (papel === 'pastor') return [USUARIOS, MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG, STYLE]
+  return [MEMBROS, ANIVERSARIOS, FUNDOS, ATIVIDADE, CONFIG, STYLE]
 }
 
 export function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const navigate = useNavigate()
   const { user, theme, setTheme, logout, ehDono, papeisDisponiveis, papelAtivo, entrarComoPapel } =
     useSession()
-  const status = useRede((s) => s.status)
-  const pares = useRede((s) => s.pares.length)
   const links = linksForRole(papelAtivo)
   // Mostra o seletor quando há mais de um papel (ou para o dono, que vê todos).
   const podeTrocar = ehDono || papeisDisponiveis.length > 1
@@ -76,8 +71,7 @@ export function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
             <p className="truncate font-display font-semibold">{user?.nome}</p>
             <p className="text-xs text-muted-foreground">
               <span className="capitalize">{user?.papel === 'irmao' ? 'membro' : user?.papel}</span>
-              {' · '}
-              {status === 'conectado' ? `${pares} aparelho(s) na rede` : 'rede desconectada'}
+              {user?.cargo && user.cargo !== 'Membro' ? ` · ${user.cargo}` : ''}
             </p>
           </div>
         </div>
@@ -137,7 +131,7 @@ export function MoreSheet({ open, onOpenChange }: { open: boolean; onOpenChange:
         <button
           onClick={() => {
             onOpenChange(false)
-            logout()
+            void logout()
           }}
           className="flex items-center justify-center gap-2 rounded-xl border border-border p-3 text-sm font-semibold text-destructive active:scale-[0.99]"
         >
