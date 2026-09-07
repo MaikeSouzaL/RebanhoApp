@@ -52,7 +52,7 @@ export function MembrosPage() {
       </div>
 
       {lista.length ? (
-        <Card className="divide-y divide-border p-0">
+        <Card className="divide-y divide-border p-0 lg:columns-2 lg:gap-0 lg:[&>*]:break-inside-avoid">
           {lista.map((mem) => (
             <button
               key={mem.id}

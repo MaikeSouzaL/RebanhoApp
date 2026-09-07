@@ -78,6 +78,8 @@ export function IrmaoHomePage() {
         </div>
       </div>
 
+      {/* Prestação de contas e campanhas lado a lado no desktop */}
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       {/* Para onde vai a oferta */}
       {donut.length > 0 && (
         <Card className="p-5">
@@ -134,6 +136,7 @@ export function IrmaoHomePage() {
           </div>
         </div>
       )}
+      </div>
 
       {/* CTA contribuir */}
       <div className="grid grid-cols-2 gap-3">

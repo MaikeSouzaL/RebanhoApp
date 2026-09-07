@@ -123,6 +123,8 @@ export function TesoureiroHomePage() {
         </Link>
       </div>
 
+      {/* Pendências e últimos lançamentos lado a lado no desktop */}
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       {/* Pendências */}
       <Card className="p-5">
         <div className="flex items-center justify-between">
@@ -208,6 +210,7 @@ export function TesoureiroHomePage() {
             <p className="p-5 text-center text-sm text-muted-foreground">Nenhum lançamento este mês.</p>
           )}
         </Card>
+      </div>
       </div>
     </div>
   )

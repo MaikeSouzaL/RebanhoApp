@@ -108,7 +108,7 @@ export function EntradasPage() {
 
             {/* Lista */}
             {lista.length ? (
-              <Card className="divide-y divide-border p-0">
+              <Card className="divide-y divide-border p-0 lg:columns-2 lg:gap-0 lg:[&>*]:break-inside-avoid">
                 {lista.map((e) => {
                   const clickable = !!e.membroId
                   const membro = e.membroId ? membroMap.get(e.membroId) : undefined

@@ -115,7 +115,7 @@ export function SaidasPage() {
 
       {/* Lista */}
       {lista.length ? (
-        <Card className="divide-y divide-border p-0">
+        <Card className="divide-y divide-border p-0 lg:columns-2 lg:gap-0 lg:[&>*]:break-inside-avoid">
           {lista.map((s) => (
             <div key={s.id} className="flex items-center gap-3 p-3.5">
               <CategoryIcon categoria={s.categoria} />

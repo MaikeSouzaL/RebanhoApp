@@ -32,7 +32,7 @@ export function AtividadePage() {
       <PageHeader title="Atividade" subtitle="Quem fez o quê, e quando" />
 
       {auditoria.length ? (
-        <Card className="divide-y divide-border p-0">
+        <Card className="divide-y divide-border p-0 lg:columns-2 lg:gap-0 lg:[&>*]:break-inside-avoid">
           {auditoria.map((a) => {
             const meta = ACAO[a.acao]
             return (

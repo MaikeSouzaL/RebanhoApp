@@ -15,7 +15,7 @@ export function FundosPage() {
     <div className="space-y-4">
       <PageHeader title="Fundos designados" subtitle="Como cada oferta é aplicada" />
 
-      <div className="space-y-3">
+      <div className="grid gap-3 lg:grid-cols-2">
         {dados.map((f) => {
           const pct = f.fundo.meta ? Math.min(1, f.saldo / f.fundo.meta) : null
           return (

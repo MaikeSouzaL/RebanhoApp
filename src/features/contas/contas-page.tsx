@@ -91,7 +91,7 @@ export function ContasPage() {
       />
 
       {lista.length ? (
-        <div className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {lista.map(({ conta, status }) => {
             const meta = CATEGORIA_MAP[conta.categoria]
             return (

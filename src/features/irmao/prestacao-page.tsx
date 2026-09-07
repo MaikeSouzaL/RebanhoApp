@@ -41,6 +41,8 @@ export function PrestacaoPage() {
         <p className="tabular font-display text-3xl font-semibold text-[color:var(--chart-3)]">{formatBRL(total)}</p>
       </Card>
 
+      {/* As duas seções lado a lado no desktop */}
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       {/* Contas a pagar em aberto */}
       <div>
         <h2 className="mb-2 font-display text-base font-semibold">
@@ -102,6 +104,7 @@ export function PrestacaoPage() {
         ) : (
           <EmptyState icon={Receipt} title="Sem gastos" description="Nenhum gasto neste período." />
         )}
+      </div>
       </div>
     </div>
   )
