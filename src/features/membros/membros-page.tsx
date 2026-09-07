@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight, Search, Users } from 'lucide-react'
 import { useData } from '@/store/data'
-import { ehEmailDono } from '@/lib/papeis'
 import { formatBRL, initials } from '@/lib/format'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card } from '@/components/ui/card'
@@ -12,15 +11,9 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/shared/empty-state'
 
 export function MembrosPage() {
-  const { membros, entradas, usuarios } = useData()
+  const { membros, entradas } = useData()
   const [busca, setBusca] = useState('')
   const navigate = useNavigate()
-
-  // Esconde a ficha de membro ligada à conta de manutenção do dono.
-  const membroDono = useMemo(
-    () => usuarios.find((u) => ehEmailDono(u.email))?.membroId,
-    [usuarios],
-  )
 
   const totais = useMemo(() => {
     const map = new Map<string, number>()
@@ -34,16 +27,15 @@ export function MembrosPage() {
   const lista = useMemo(() => {
     const q = busca.trim().toLowerCase()
     return membros
-      .filter((mem) => mem.id !== membroDono)
       .filter((mem) => (q ? mem.nome.toLowerCase().includes(q) : true))
       .sort((a, b) => (totais.get(b.id) ?? 0) - (totais.get(a.id) ?? 0))
-  }, [membros, busca, totais, membroDono])
+  }, [membros, busca, totais])
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Membros"
-        subtitle={`${membros.filter((m) => m.id !== membroDono).length} cadastrados · contribuições no ano`}
+        subtitle={`${membros.length} cadastrados · contribuições no ano`}
       />
 
       <div className="relative">

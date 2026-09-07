@@ -25,7 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { ehEmailDono, normalizarPapeis, papeisDoUsuario } from '@/lib/papeis'
+import { normalizarPapeis, papeisDoUsuario } from '@/lib/papeis'
 import { CARGOS, cargoDe } from '@/data/cargos'
 import type { Papel, Usuario } from '@/data/types'
 import { cn } from '@/lib/utils'
@@ -69,8 +69,7 @@ export function UsuariosPage() {
     const q = busca.trim().toLowerCase()
     const ordem: Record<Papel, number> = { pastor: 0, tesoureiro: 1, irmao: 2 }
     return usuarios
-      // A conta de manutenção do dono não aparece para ninguém.
-      .filter((u) => !ehEmailDono(u.email))
+      // A conta do dono aparece como um membro comum, como qualquer outra.
       .filter((u) => (q ? u.nome.toLowerCase().includes(q) || u.email.includes(q) : true))
       .sort((a, b) => ordem[a.papel] - ordem[b.papel] || a.nome.localeCompare(b.nome, 'pt-BR'))
   }, [usuarios, busca])
