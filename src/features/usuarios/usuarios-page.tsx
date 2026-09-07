@@ -52,6 +52,7 @@ function descricaoPapel(papel: Papel): string {
 export function UsuariosPage() {
   const { usuarios, definirPapeis } = useData()
   const eu = useSession((s) => s.user)
+  const ehDono = useSession((s) => s.ehDono)
   const [busca, setBusca] = useState('')
   const [emEdicao, setEmEdicao] = useState<Usuario | null>(null)
   const [selecao, setSelecao] = useState<Papel[]>([])
@@ -89,9 +90,10 @@ export function UsuariosPage() {
   }
 
   // Retirar o último pastor deixaria a igreja sem quem administra — o banco
-  // recusaria de qualquer forma, então nem oferecemos a opção.
+  // recusaria de qualquer forma, então nem oferecemos a opção. O dono, porém,
+  // é o administrador-raiz e pode reatribuir o pastor livremente.
   const ehUnicoPastor =
-    !!emEdicao && totalPastores === 1 && papeisDoUsuario(emEdicao).includes('pastor')
+    !ehDono && !!emEdicao && totalPastores === 1 && papeisDoUsuario(emEdicao).includes('pastor')
 
   async function salvar() {
     if (!emEdicao) return
