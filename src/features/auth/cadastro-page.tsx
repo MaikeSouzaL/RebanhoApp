@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
 import { useSession } from '@/store/session'
+import { GoogleButton } from '@/components/shared/google-button'
 import { toast } from 'sonner'
 
 export function CadastroPage() {
@@ -131,6 +132,8 @@ export function CadastroPage() {
             {enviando ? <Loader2 className="animate-spin" /> : <UserPlus />}
             {enviando ? 'Criando…' : 'Criar cadastro'}
           </Button>
+
+          <GoogleButton texto="Cadastrar com Google" />
         </form>
 
         <p className="mt-5 text-center text-sm text-muted-foreground">

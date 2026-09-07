@@ -59,6 +59,7 @@ interface SessionState {
   iniciar: () => Promise<void>
   cadastrar: (dados: DadosCadastro) => Promise<Resultado>
   login: (email: string, senha: string) => Promise<Resultado>
+  entrarComGoogle: () => Promise<Resultado>
   logout: () => Promise<void>
   entrarComoPapel: (papel: Papel) => void
   setTheme: (t: Theme) => void
@@ -187,6 +188,30 @@ export const useSession = create<SessionState>((set, get) => ({
     if (perfil) setAuditUser(perfil.nome)
     ligarTempoReal()
     set({ user: perfil, ...estadoDePapel(perfil) })
+    return { ok: true }
+  },
+
+  /**
+   * Entra com a conta Google. Redireciona para o Google e volta para o app já
+   * logado — o `onAuthStateChange` (em `iniciar`) cuida do resto quando a
+   * página recarrega. Exige o provedor Google ligado no painel do Supabase.
+   */
+  entrarComGoogle: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+        queryParams: { prompt: 'select_account' },
+      },
+    })
+    if (error) {
+      if (/provider is not enabled|not enabled/i.test(error.message)) {
+        return { ok: false, erro: 'Login com Google ainda não está ativado no servidor.' }
+      }
+      return { ok: false, erro: mensagemDeErro(error.message) }
+    }
+    // A navegação para o Google acontece aqui; a resposta abaixo raramente é
+    // usada, mas mantém a assinatura consistente.
     return { ok: true }
   },
 

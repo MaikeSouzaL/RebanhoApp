@@ -23,6 +23,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     // Mantém a pessoa logada entre aberturas do app e renova o token sozinho.
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    // Ligado para o "Entrar com Google": ao voltar do Google, o token vem na
+    // URL e o Supabase o transforma em sessão automaticamente.
+    detectSessionInUrl: true,
+    flowType: 'pkce',
   },
 })

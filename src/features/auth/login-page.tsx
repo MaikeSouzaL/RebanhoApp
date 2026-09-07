@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useData } from '@/store/data'
 import { useSession } from '@/store/session'
+import { GoogleButton } from '@/components/shared/google-button'
 import { toast } from 'sonner'
 
 export function LoginPage() {
@@ -84,7 +85,7 @@ export function LoginPage() {
             {enviando ? 'Entrando…' : 'Entrar'}
           </Button>
 
-
+          <GoogleButton texto="Entrar com Google" />
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
