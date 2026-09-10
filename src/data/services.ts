@@ -256,10 +256,12 @@ export const services = {
 
   // ---------- Config ----------
   async saveConfig(patch: Partial<ConfigIgreja>): Promise<void> {
+    // Upsert no singleton (id=true): se a linha não existir — por exemplo depois
+    // de um reset de produção — cria; senão, atualiza. Um UPDATE simples que não
+    // acerta nenhuma linha "salvaria" sem erro e sem gravar nada.
     const { error } = await supabase
       .from('config_igreja')
-      .update(configParaLinha(patch))
-      .eq('id', true)
+      .upsert({ id: true, ...configParaLinha(patch) }, { onConflict: 'id' })
     if (error) erro('salvar os dados da igreja', error)
     void auditar('editou', 'configurações', 'dados da igreja')
   },
