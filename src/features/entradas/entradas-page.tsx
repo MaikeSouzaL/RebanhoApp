@@ -46,7 +46,10 @@ export function EntradasPage() {
   const ticket = lista.length ? total / lista.length : 0
 
   function nome(e: Entrada) {
-    if (e.tipo === 'dizimo') return e.membroId ? membroMap.get(e.membroId)?.nome ?? 'Membro' : 'Dízimo'
+    // Havendo membro, o nome de quem contribuiu vem primeiro — é o que o pastor
+    // e a tesouraria querem ver ("quem ajudou"), seja dízimo ou oferta.
+    if (e.membroId) return membroMap.get(e.membroId)?.nome ?? 'Membro'
+    if (e.tipo === 'dizimo') return 'Dízimo'
     return e.subtipo ?? TIPO_ENTRADA_LABEL[e.tipo]
   }
 
@@ -129,10 +132,21 @@ export function EntradasPage() {
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{nome(e)}</p>
-                        <div className="mt-0.5 flex items-center gap-2">
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          {e.membroId && e.subtipo && (
+                            <>
+                              <span className="truncate text-xs text-muted-foreground">{e.subtipo}</span>
+                              <span className="text-muted-foreground/50">·</span>
+                            </>
+                          )}
                           <FormaTag forma={e.forma} />
                           <span className="text-muted-foreground/50">·</span>
                           <FundBadge fundo={fundoMap.get(e.fundoId)} />
+                          {e.origem === 'membro' && (
+                            <span className="rounded-full bg-info/12 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-info">
+                              via membro
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
