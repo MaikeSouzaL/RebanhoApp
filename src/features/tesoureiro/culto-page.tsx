@@ -18,8 +18,10 @@ const CEDULAS = [200, 100, 50, 20, 10, 5, 2]
 const MOEDAS = [1, 0.5, 0.25, 0.1, 0.05]
 
 export function CultoPage() {
-  const { addEntrada } = useData()
+  const { addEntrada, fundos } = useData()
   const navigate = useNavigate()
+  // Fundo real do banco (o Caixa geral, ou o primeiro que houver, ou nenhum).
+  const fundoPadrao = fundos.find((f) => f.id === 'f-geral')?.id ?? fundos[0]?.id ?? ''
   const [qtd, setQtd] = useState<Record<string, number>>({})
   const [pix, setPix] = useState(0)
   const [data, setData] = useState(isoDayOf(new Date()))
@@ -36,9 +38,9 @@ export function CultoPage() {
   function fechar() {
     if (total <= 0) return toast.error('Informe os valores do culto.')
     if (dinheiro > 0)
-      addEntrada({ tipo: 'oferta', subtipo: 'Culto', valor: dinheiro, data, forma: 'dinheiro', fundoId: 'f-geral', membroId: null })
+      addEntrada({ tipo: 'oferta', subtipo: 'Culto', valor: dinheiro, data, forma: 'dinheiro', fundoId: fundoPadrao, membroId: null })
     if (pix > 0)
-      addEntrada({ tipo: 'oferta', subtipo: 'Culto', valor: pix, data, forma: 'pix', fundoId: 'f-geral', membroId: null })
+      addEntrada({ tipo: 'oferta', subtipo: 'Culto', valor: pix, data, forma: 'pix', fundoId: fundoPadrao, membroId: null })
     toast.success(`Culto fechado: ${formatBRL(total)}`)
     navigate('/lancamentos')
   }

@@ -37,7 +37,9 @@ export function DespesaFormPage() {
   const [categoria, setCategoria] = useState<CategoriaDespesaId>(existing?.categoria ?? 'materiais')
   const [descricao, setDescricao] = useState(existing?.descricao ?? '')
   const [fornecedor, setFornecedor] = useState(existing?.fornecedor ?? '')
-  const [fundoId, setFundoId] = useState(existing?.fundoId ?? 'f-geral')
+  // Fundo padrão real (do banco); nunca um id fixo que pode não existir.
+  const fundoPadrao = fundos.find((f) => f.id === 'f-geral')?.id ?? fundos[0]?.id ?? ''
+  const [fundoId, setFundoId] = useState(existing?.fundoId ?? fundoPadrao)
   const [data, setData] = useState(existing?.data ?? isoDayOf(new Date()))
   const [forma, setForma] = useState<FormaPagamento>(existing?.forma ?? 'pix')
   const [comprovanteUrl, setComprovanteUrl] = useState<string | undefined>(existing?.comprovanteUrl)
@@ -62,7 +64,7 @@ export function DespesaFormPage() {
       valor,
       data,
       forma,
-      fundoId,
+      fundoId: fundos.some((f) => f.id === fundoId) ? fundoId : '',
       comprovante: !!comprovanteUrl,
       comprovanteUrl,
       obs: obs.trim() || undefined,

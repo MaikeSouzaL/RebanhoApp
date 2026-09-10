@@ -37,7 +37,9 @@ export function ContaFormPage() {
   const [descricao, setDescricao] = useState('')
   const [categoria, setCategoria] = useState<CategoriaDespesaId>('outros')
   const [fornecedor, setFornecedor] = useState('')
-  const [fundoId, setFundoId] = useState('f-geral')
+  // Fundo padrão real (do banco); nunca um id fixo que pode não existir.
+  const fundoPadrao = fundos.find((f) => f.id === 'f-geral')?.id ?? fundos[0]?.id ?? ''
+  const [fundoId, setFundoId] = useState(fundoPadrao)
   const [vencimento, setVencimento] = useState(isoDayOf(addDays(new Date(), 7)))
   const [recorrencia, setRecorrencia] = useState<Recorrencia>('mensal')
   const [erros, setErros] = useState<{ valor?: string; descricao?: string }>({})
@@ -57,7 +59,7 @@ export function ContaFormPage() {
       vencimento,
       status: 'pendente',
       recorrencia,
-      fundoId,
+      fundoId: fundos.some((f) => f.id === fundoId) ? fundoId : '',
       fornecedor: fornecedor.trim() || undefined,
     })
     toast.success('Conta a pagar cadastrada!')

@@ -33,10 +33,16 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
   const isDizimo = tipo === 'dizimo'
   const editando = !!existing
 
+  // Fundo padrão real (vem do banco). Nunca usamos um id fixo que pode não
+  // existir — isso quebrava o lançamento com erro de chave estrangeira.
+  const fundoDe = (slug: string) =>
+    fundos.find((f) => f.id === slug)?.id ?? fundos[0]?.id ?? ''
+  const fundoPadrao = fundoDe('f-geral')
+
   const [valor, setValor] = useState(existing?.valor ?? 0)
   const [membroId, setMembroId] = useState<string | null>(existing?.membroId ?? null)
   const [subtipo, setSubtipo] = useState(existing?.subtipo ?? SUBTIPOS_OFERTA[0]!)
-  const [fundoId, setFundoId] = useState(existing?.fundoId ?? 'f-geral')
+  const [fundoId, setFundoId] = useState(existing?.fundoId ?? fundoPadrao)
   const [data, setData] = useState(existing?.data ?? isoDayOf(new Date()))
   const [forma, setForma] = useState<FormaPagamento>(existing?.forma ?? 'pix')
   const [obs, setObs] = useState(existing?.obs ?? '')
@@ -52,9 +58,9 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
 
   function onSubtipoChange(v: string) {
     setSubtipo(v)
-    if (v === 'Missões') setFundoId('f-missoes')
-    else if (v === 'Construção') setFundoId('f-construcao')
-    else setFundoId('f-geral')
+    if (v === 'Missões') setFundoId(fundoDe('f-missoes'))
+    else if (v === 'Construção') setFundoId(fundoDe('f-obras'))
+    else setFundoId(fundoPadrao)
   }
 
   function salvar() {
@@ -66,7 +72,8 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
       valor,
       data,
       forma,
-      fundoId,
+      // Só manda o fundo se ele realmente existe; senão, sem fundo (nulo).
+      fundoId: fundos.some((f) => f.id === fundoId) ? fundoId : '',
       membroId,
       obs: obs.trim() || undefined,
     }
