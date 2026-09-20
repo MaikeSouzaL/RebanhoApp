@@ -59,7 +59,9 @@ export function LancamentosPage() {
   function titulo(r: Row): string {
     if (r.kind === 'entrada') {
       if (r.item.tipo === 'dizimo')
-        return r.item.membroId ? membroMap.get(r.item.membroId)?.nome ?? 'Dízimo' : 'Dízimo'
+        return r.item.membroId
+          ? membroMap.get(r.item.membroId)?.nome ?? 'Dízimo'
+          : r.item.contribuinteNome ?? 'Dízimo'
       return r.item.subtipo ?? TIPO_ENTRADA_LABEL[r.item.tipo]
     }
     return r.item.descricao
@@ -116,8 +118,14 @@ export function LancamentosPage() {
             <div key={r.item.id} className="flex items-center gap-2.5 p-3.5">
               {r.kind === 'entrada' ? (
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success/12 text-success">
-                  {r.item.membroId ? (
-                    <span className="text-[11px] font-bold">{initials(membroMap.get(r.item.membroId)?.nome ?? '?')}</span>
+                  {r.item.membroId || r.item.contribuinteNome ? (
+                    <span className="text-[11px] font-bold">
+                      {initials(
+                        r.item.membroId
+                          ? membroMap.get(r.item.membroId)?.nome ?? '?'
+                          : r.item.contribuinteNome ?? '?',
+                      )}
+                    </span>
                   ) : (
                     <ArrowUpRight className="size-5" />
                   )}

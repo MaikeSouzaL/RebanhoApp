@@ -36,7 +36,7 @@ const ACOES: { to: string; label: string; icon: LucideIcon; color: string }[] = 
 ]
 
 export function TesoureiroHomePage() {
-  const { entradas, saidas, contasPagar } = useData()
+  const { entradas, saidas, contasPagar, membros } = useData()
   const { user } = useSession()
   const navigate = useNavigate()
 
@@ -194,7 +194,9 @@ export function TesoureiroHomePage() {
                 <p className="truncate text-sm font-medium">
                   {r.kind === 'entrada'
                     ? r.item.tipo === 'dizimo'
-                      ? 'Dízimo'
+                      ? r.item.membroId
+                        ? membros.find((membro) => membro.id === r.item.membroId)?.nome ?? 'Dízimo'
+                        : r.item.contribuinteNome ?? 'Dízimo'
                       : r.item.subtipo ?? 'Oferta'
                     : r.item.descricao}
                 </p>

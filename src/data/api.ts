@@ -66,6 +66,7 @@ function paraEntrada(l: Linha): Entrada {
     forma: texto(l.forma) as Entrada['forma'],
     fundoId: texto(l.fundo_id),
     membroId: l.membro_id == null ? null : texto(l.membro_id),
+    contribuinteNome: l.contribuinte_nome == null ? null : texto(l.contribuinte_nome),
     origem: l.origem === 'membro' ? 'membro' : 'tesouraria',
     obs: opcional(l.obs),
   }
@@ -156,6 +157,7 @@ export function entradaParaLinha(e: Partial<Entrada>): Linha {
   if (e.forma !== undefined) l.forma = e.forma
   if (e.fundoId !== undefined) l.fundo_id = e.fundoId || null
   if (e.membroId !== undefined) l.membro_id = e.membroId || null
+  if (e.contribuinteNome !== undefined) l.contribuinte_nome = e.contribuinteNome?.trim() || null
   if (e.origem !== undefined) l.origem = e.origem
   if (e.obs !== undefined) l.obs = e.obs
   return l

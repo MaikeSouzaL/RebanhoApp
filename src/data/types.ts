@@ -76,6 +76,8 @@ export interface Entrada {
   forma: FormaPagamento
   fundoId: string
   membroId?: string | null // null = anônimo
+  /** Nome informado pela tesouraria quando a pessoa ainda não tem cadastro. */
+  contribuinteNome?: string | null
   /**
    * Quem registrou a entrada: 'tesouraria' (pastor/tesoureiro no lançamento) ou
    * 'membro' (o próprio contribuinte, pela tela Contribuir, via Pix). Serve para

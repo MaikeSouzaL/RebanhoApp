@@ -35,7 +35,7 @@ export function EntradasPage() {
     if (busca.trim()) {
       const q = busca.toLowerCase()
       l = l.filter((e) => {
-        const nome = e.membroId ? membroMap.get(e.membroId)?.nome ?? '' : ''
+        const nome = e.membroId ? membroMap.get(e.membroId)?.nome ?? '' : e.contribuinteNome ?? ''
         return (nome + ' ' + (e.subtipo ?? '')).toLowerCase().includes(q)
       })
     }
@@ -49,6 +49,7 @@ export function EntradasPage() {
     // Havendo membro, o nome de quem contribuiu vem primeiro — é o que o pastor
     // e a tesouraria querem ver ("quem ajudou"), seja dízimo ou oferta.
     if (e.membroId) return membroMap.get(e.membroId)?.nome ?? 'Membro'
+    if (e.contribuinteNome) return e.contribuinteNome
     if (e.tipo === 'dizimo') return 'Dízimo'
     return e.subtipo ?? TIPO_ENTRADA_LABEL[e.tipo]
   }
@@ -61,7 +62,7 @@ export function EntradasPage() {
         formatDate(e.data),
         TIPO_ENTRADA_LABEL[e.tipo],
         e.subtipo ?? '',
-        e.membroId ? membroMap.get(e.membroId)?.nome ?? '' : 'Anônimo',
+        e.membroId ? membroMap.get(e.membroId)?.nome ?? '' : e.contribuinteNome ?? 'Anônimo',
         e.forma,
         fundoMap.get(e.fundoId)?.nome ?? '',
         e.valor,
@@ -127,7 +128,13 @@ export function EntradasPage() {
                     >
                       <Avatar className="size-10">
                         <AvatarFallback>
-                          {membro ? initials(membro.nome) : e.tipo === 'oferta' ? '♥' : '◎'}
+                          {membro
+                            ? initials(membro.nome)
+                            : e.contribuinteNome
+                              ? initials(e.contribuinteNome)
+                              : e.tipo === 'oferta'
+                                ? '♥'
+                                : '◎'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">

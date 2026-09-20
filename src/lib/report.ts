@@ -208,7 +208,17 @@ export interface Contribuintes {
 
 export function contribuintes(entradas: Entrada[]): Contribuintes {
   const dizimos = entradas.filter((e) => e.tipo === 'dizimo')
-  const membros = new Set(dizimos.map((e) => e.membroId).filter(Boolean))
+  const membros = new Set(
+    dizimos
+      .map((e) =>
+        e.membroId
+          ? `membro:${e.membroId}`
+          : e.contribuinteNome?.trim()
+            ? `nome:${e.contribuinteNome.trim().toLocaleLowerCase('pt-BR')}`
+            : null,
+      )
+      .filter(Boolean),
+  )
   const total = sum(dizimos)
   return {
     qtdDizimistas: membros.size,

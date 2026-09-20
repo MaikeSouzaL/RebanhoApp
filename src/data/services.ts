@@ -75,7 +75,12 @@ export const services = {
       .select()
       .single()
     if (error) erro('registrar a entrada', error)
-    void auditar('criou', rotuloEntrada(input.tipo), input.subtipo ?? '', input.valor)
+    void auditar(
+      'criou',
+      rotuloEntrada(input.tipo),
+      input.contribuinteNome ?? input.subtipo ?? '',
+      input.valor,
+    )
     return { ...input, id: String(data.id), competencia: String(data.competencia) }
   },
 

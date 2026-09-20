@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, ChevronDown, Search, UserRound } from 'lucide-react'
+import { Check, ChevronDown, Search, UserPlus, UserRound } from 'lucide-react'
 import { useData } from '@/store/data'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -17,9 +17,19 @@ interface MemberPickerProps {
   value: string | null // membroId ou null (anônimo)
   onChange: (value: string | null) => void
   allowAnonimo?: boolean
+  customName?: string
+  onCustomNameChange?: (value: string) => void
+  allowCustomName?: boolean
 }
 
-export function MemberPicker({ value, onChange, allowAnonimo = true }: MemberPickerProps) {
+export function MemberPicker({
+  value,
+  onChange,
+  allowAnonimo = true,
+  customName = '',
+  onCustomNameChange,
+  allowCustomName = false,
+}: MemberPickerProps) {
   const { membros } = useData()
   const [open, setOpen] = useState(false)
   const [busca, setBusca] = useState('')
@@ -35,9 +45,24 @@ export function MemberPicker({ value, onChange, allowAnonimo = true }: MemberPic
 
   function choose(id: string | null) {
     onChange(id)
+    onCustomNameChange?.('')
     setOpen(false)
     setBusca('')
   }
+
+  function chooseCustomName() {
+    const nome = busca.trim()
+    if (!nome) return
+    onChange(null)
+    onCustomNameChange?.(nome)
+    setOpen(false)
+    setBusca('')
+  }
+
+  const customNameOption = busca.trim()
+  const hasExactMember = lista.some(
+    (m) => m.nome.localeCompare(customNameOption, 'pt-BR', { sensitivity: 'base' }) === 0,
+  )
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -52,6 +77,14 @@ export function MemberPicker({ value, onChange, allowAnonimo = true }: MemberPic
                 <AvatarFallback className="text-[10px]">{initials(selecionado.nome)}</AvatarFallback>
               </Avatar>
               <span className="flex-1 truncate text-sm font-medium">{selecionado.nome}</span>
+            </>
+          ) : customName ? (
+            <>
+              <span className="flex size-7 items-center justify-center rounded-full bg-primary/12 text-primary">
+                <UserPlus className="size-4" />
+              </span>
+              <span className="flex-1 truncate text-sm font-medium">{customName}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">sem cadastro</span>
             </>
           ) : (
             <>
@@ -79,8 +112,29 @@ export function MemberPicker({ value, onChange, allowAnonimo = true }: MemberPic
             placeholder="Buscar membro…"
             className="pl-9"
           />
+          {allowCustomName && (
+            <p className="text-xs text-muted-foreground">
+              Não encontrou? Digite o nome completo e use sem criar cadastro.
+            </p>
+          )}
         </div>
         <div className="-mx-2 overflow-y-auto">
+          {allowCustomName && customNameOption && !hasExactMember && (
+            <button
+              type="button"
+              onClick={chooseCustomName}
+              className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left active:bg-accent"
+            >
+              <span className="flex size-9 items-center justify-center rounded-full bg-primary/12 text-primary">
+                <UserPlus className="size-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">Usar “{customNameOption}”</span>
+                <span className="block text-xs text-muted-foreground">Somente neste lançamento</span>
+              </span>
+              {customName === customNameOption && <Check className="size-4 text-primary" />}
+            </button>
+          )}
           {allowAnonimo && (
             <button
               type="button"
@@ -91,7 +145,7 @@ export function MemberPicker({ value, onChange, allowAnonimo = true }: MemberPic
                 <UserRound className="size-4" />
               </span>
               <span className="flex-1 text-sm font-medium">Anônimo / não identificado</span>
-              {value === null && <Check className="size-4 text-primary" />}
+              {value === null && !customName && <Check className="size-4 text-primary" />}
             </button>
           )}
           {lista.map((m) => (

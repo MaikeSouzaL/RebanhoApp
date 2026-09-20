@@ -41,6 +41,7 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
 
   const [valor, setValor] = useState(existing?.valor ?? 0)
   const [membroId, setMembroId] = useState<string | null>(existing?.membroId ?? null)
+  const [contribuinteNome, setContribuinteNome] = useState(existing?.contribuinteNome ?? '')
   const [subtipo, setSubtipo] = useState(existing?.subtipo ?? SUBTIPOS_OFERTA[0]!)
   const [fundoId, setFundoId] = useState(existing?.fundoId ?? fundoPadrao)
   const [data, setData] = useState(existing?.data ?? isoDayOf(new Date()))
@@ -75,6 +76,7 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
       // Só manda o fundo se ele realmente existe; senão, sem fundo (nulo).
       fundoId: fundos.some((f) => f.id === fundoId) ? fundoId : '',
       membroId,
+      contribuinteNome: membroId ? null : contribuinteNome.trim() || null,
       obs: obs.trim() || undefined,
     }
     if (editando) updateEntrada(existing!.id, payload)
@@ -107,8 +109,17 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
         </Field>
       )}
 
-      <Field label={isDizimo ? 'Membro' : 'Membro (opcional)'} hint={isDizimo ? undefined : 'Deixe como anônimo se não identificado.'}>
-        <MemberPicker value={membroId} onChange={setMembroId} />
+      <Field
+        label={isDizimo ? 'Membro ou contribuinte' : 'Membro (opcional)'}
+        hint={isDizimo ? 'Selecione um cadastro ou informe somente o nome.' : 'Deixe como anônimo se não identificado.'}
+      >
+        <MemberPicker
+          value={membroId}
+          onChange={setMembroId}
+          customName={contribuinteNome}
+          onCustomNameChange={setContribuinteNome}
+          allowCustomName={isDizimo}
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
