@@ -78,7 +78,7 @@ export function RelatoriosPage() {
     documentTitle: `Prestacao-de-contas-${period.inicio}`,
   })
 
-  const resumoTexto = `*Prestação de contas — ${period.label}*\n${config.nome}\n\n• Entradas: ${formatBRL(data.totalEntradas)}\n• Saídas: ${formatBRL(data.totalSaidas)}\n• Resultado: ${formatBRL(data.resultado)}\n• Saldo em caixa: ${formatBRL(data.saldoFinal)}`
+  const resumoTexto = `*Prestação de contas — ${period.label}*\n${config.nome}\n\n• Entradas: ${formatBRL(data.totalEntradas)}\n• Pagamentos: ${formatBRL(data.totalSaidas)}\n• Resultado: ${formatBRL(data.resultado)}\n• Saldo em caixa: ${formatBRL(data.saldoFinal)}`
 
   async function compartilhar() {
     const r = await shareText(`Prestação de contas — ${period.label}`, resumoTexto)
@@ -116,7 +116,7 @@ export function RelatoriosPage() {
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Saídas</p>
+            <p className="text-xs text-muted-foreground">Pagamentos</p>
             <p className="tabular font-display text-base font-semibold text-[color:var(--chart-3)]">
               {formatBRL(data.totalSaidas, { compact: true })}
             </p>

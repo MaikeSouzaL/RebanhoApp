@@ -118,7 +118,7 @@ export function CashflowChart({ data, height = 220 }: { data: FlowDatum[]; heigh
                     <p key={p.dataKey} className="flex items-center gap-1.5 tabular">
                       <span className="size-2 rounded-full" style={{ background: p.color }} />
                       <span className="text-muted-foreground">
-                        {p.dataKey === 'entradas' ? 'Entradas' : p.dataKey === 'saidas' ? 'Saídas' : 'Saldo'}:
+                        {p.dataKey === 'entradas' ? 'Entradas' : p.dataKey === 'saidas' ? 'Pagamentos' : 'Saldo'}:
                       </span>
                       {formatBRL(p.value as number)}
                     </p>

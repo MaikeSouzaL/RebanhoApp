@@ -112,7 +112,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, { data: ReportData }>(f
         <div>
           <Row label="Saldo inicial" value={formatBRL(data.saldoInicial)} />
           <Row label="(+) Total de entradas" value={formatBRL(data.totalEntradas)} color={GREEN} />
-          <Row label="(−) Total de saídas" value={formatBRL(data.totalSaidas)} color={RED} />
+          <Row label="(−) Pagamentos realizados" value={formatBRL(data.totalSaidas)} color={RED} />
         </div>
         <div>
           <Row
@@ -134,7 +134,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, { data: ReportData }>(f
       <Row label="Total de entradas" value={formatBRL(data.totalEntradas)} bold color={GREEN} />
 
       {/* Saídas por categoria */}
-      <SectionTitle>Saídas por categoria</SectionTitle>
+      <SectionTitle>Pagamentos por categoria</SectionTitle>
       {data.saidasCategorias.map((c) => {
         const meta = CATEGORIA_MAP[c.categoria]
         return (
@@ -149,14 +149,14 @@ export const ReportDocument = forwardRef<HTMLDivElement, { data: ReportData }>(f
           </div>
         )
       })}
-      <Row label="Total de saídas" value={formatBRL(data.totalSaidas)} bold color={RED} />
+      <Row label="Total de pagamentos" value={formatBRL(data.totalSaidas)} bold color={RED} />
 
       {/* Fundos */}
       <SectionTitle>Movimentação por fundo</SectionTitle>
       <div style={{ display: 'flex', fontSize: 11, color: MUTED, padding: '4px 0', borderBottom: `1px solid ${LINE}` }}>
         <span style={{ flex: 2 }}>Fundo</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Entradas</span>
-        <span style={{ flex: 1, textAlign: 'right' }}>Saídas</span>
+        <span style={{ flex: 1, textAlign: 'right' }}>Pagamentos</span>
         <span style={{ flex: 1, textAlign: 'right' }}>Saldo</span>
       </div>
       {data.fundos.map((f) => (
@@ -171,7 +171,7 @@ export const ReportDocument = forwardRef<HTMLDivElement, { data: ReportData }>(f
       {/* Contas em aberto */}
       {data.contasAbertas.length > 0 && (
         <>
-          <SectionTitle>Contas a pagar em aberto</SectionTitle>
+          <SectionTitle>Pagamentos pendentes</SectionTitle>
           {data.contasAbertas.map((c) => (
             <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${LINE}` }}>
               <span>

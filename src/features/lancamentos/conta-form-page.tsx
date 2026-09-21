@@ -62,13 +62,13 @@ export function ContaFormPage() {
       fundoId: fundos.some((f) => f.id === fundoId) ? fundoId : '',
       fornecedor: fornecedor.trim() || undefined,
     })
-    toast.success('Conta a pagar cadastrada!')
+    toast.success('Pagamento pendente cadastrado!')
     navigate('/contas')
   }
 
   return (
     <FormShell
-      title="Nova conta a pagar"
+      title="Novo pagamento pendente"
       subtitle="Compromisso com vencimento"
       onSubmit={salvar}
       submitLabel="Cadastrar conta"

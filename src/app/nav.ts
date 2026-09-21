@@ -30,8 +30,8 @@ export interface NavItem {
 export const PASTOR_TABS: NavItem[] = [
   { to: '/', label: 'Início', icon: LayoutDashboard, end: true },
   { to: '/entradas', label: 'Entradas', icon: ArrowUpCircle },
-  { to: '/saidas', label: 'Saídas', icon: ArrowDownCircle },
-  { to: '/contas', label: 'Contas', icon: Receipt },
+  { to: '/saidas', label: 'Pagos', icon: ArrowDownCircle },
+  { to: '/contas', label: 'Pendentes', icon: Receipt },
   { to: '/relatorios', label: 'Relatório', icon: FileText },
 ]
 
@@ -39,15 +39,15 @@ export const PASTOR_TABS: NavItem[] = [
 export const TESOUREIRO_TABS: NavItem[] = [
   { to: '/', label: 'Início', icon: LayoutDashboard, end: true },
   { to: '/entradas', label: 'Entradas', icon: ArrowUpCircle },
-  { to: '/saidas', label: 'Saídas', icon: ArrowDownCircle },
+  { to: '/saidas', label: 'Pagos', icon: ArrowDownCircle },
   { to: '/lancamentos', label: 'Lançamentos', icon: ListChecks },
-  { to: '/contas', label: 'Contas', icon: Receipt },
+  { to: '/contas', label: 'Pendentes', icon: Receipt },
 ]
 
 /** Abas principais (bottom nav) dos Irmãos. */
 export const IRMAO_TABS: NavItem[] = [
   { to: '/', label: 'Início', icon: LayoutDashboard, end: true },
-  { to: '/gastos', label: 'Gastos', icon: Receipt },
+  { to: '/gastos', label: 'Pagamentos', icon: Receipt },
   { to: '/fundos', label: 'Campanhas', icon: Sprout },
   { to: '/contribuir', label: 'Contribuir', icon: HandCoins },
   { to: '/minha', label: 'Minha conta', icon: UserRound },

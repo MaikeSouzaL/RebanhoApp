@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils'
 const OPCOES: { to: string; label: string; desc: string; icon: LucideIcon; color: string }[] = [
   { to: '/novo/dizimo', label: 'Dízimo', desc: 'Contribuição de um membro', icon: HandCoins, color: 'var(--chart-1)' },
   { to: '/novo/oferta', label: 'Oferta', desc: 'Culto, missões, gratidão…', icon: HeartHandshake, color: 'var(--chart-2)' },
-  { to: '/novo/despesa', label: 'Despesa', desc: 'Um gasto já pago', icon: ShoppingCart, color: 'var(--chart-3)' },
-  { to: '/novo/conta', label: 'Conta a pagar', desc: 'Compromisso com vencimento', icon: Receipt, color: 'var(--warning)' },
+  { to: '/novo/despesa', label: 'Pagamento realizado', desc: 'Dinheiro que já saiu do caixa', icon: ShoppingCart, color: 'var(--chart-3)' },
+  { to: '/novo/conta', label: 'Pagamento pendente', desc: 'Compromisso com vencimento', icon: Receipt, color: 'var(--warning)' },
   { to: '/culto', label: 'Fechamento de culto', desc: 'Conte a oferta e registre', icon: Church, color: 'var(--flame-via)' },
 ]
 

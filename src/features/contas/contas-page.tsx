@@ -57,7 +57,7 @@ export function ContasPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Contas a Pagar" subtitle="Compromissos e vencimentos da igreja" />
+      <PageHeader title="Pagamentos pendentes" subtitle="Compromissos e vencimentos que ainda serão pagos" />
 
       {/* Totais */}
       <div className="grid grid-cols-3 gap-3">

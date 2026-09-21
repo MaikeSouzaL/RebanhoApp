@@ -58,7 +58,7 @@ export function FundosPage() {
                   <ArrowDownCircle className="size-5 text-[color:var(--chart-3)]" />
                   <div>
                     <p className="tabular text-sm font-semibold">{formatBRL(f.saidas, { compact: true })}</p>
-                    <p className="text-[11px] text-muted-foreground">saídas</p>
+                    <p className="text-[11px] text-muted-foreground">pagamentos</p>
                   </div>
                 </div>
               </div>

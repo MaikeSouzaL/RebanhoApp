@@ -43,10 +43,10 @@ export function PrestacaoPage() {
 
       {/* As duas seções lado a lado no desktop */}
       <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-      {/* Contas a pagar em aberto */}
+      {/* Pagamentos pendentes */}
       <div>
         <h2 className="mb-2 font-display text-base font-semibold">
-          A igreja precisa pagar
+          Pagamentos pendentes
           <span className="ml-2 tabular text-sm font-semibold text-muted-foreground">
             {formatBRL(totalAberto, { compact: true })}
           </span>
@@ -79,9 +79,9 @@ export function PrestacaoPage() {
         )}
       </div>
 
-      {/* Gastos do período */}
+      {/* Pagamentos realizados no período */}
       <div>
-        <h2 className="mb-2 font-display text-base font-semibold">Gastos do período</h2>
+        <h2 className="mb-2 font-display text-base font-semibold">Pagamentos realizados</h2>
         {gastos.length ? (
           <Card className="divide-y divide-border p-0">
             {gastos.map((s) => (
@@ -102,7 +102,7 @@ export function PrestacaoPage() {
             ))}
           </Card>
         ) : (
-          <EmptyState icon={Receipt} title="Sem gastos" description="Nenhum gasto neste período." />
+          <EmptyState icon={Receipt} title="Nenhum pagamento" description="Nenhum pagamento realizado neste período." />
         )}
       </div>
       </div>

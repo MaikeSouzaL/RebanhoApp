@@ -97,7 +97,7 @@ export function LancamentosPage() {
         options={[
           { value: 'todos', label: 'Todos' },
           { value: 'entradas', label: 'Entradas' },
-          { value: 'saidas', label: 'Saídas' },
+          { value: 'saidas', label: 'Pagamentos' },
         ]}
       />
 

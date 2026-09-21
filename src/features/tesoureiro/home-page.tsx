@@ -31,8 +31,8 @@ import { cn } from '@/lib/utils'
 const ACOES: { to: string; label: string; icon: LucideIcon; color: string }[] = [
   { to: '/novo/dizimo', label: 'Dízimo', icon: HandCoins, color: 'var(--chart-1)' },
   { to: '/novo/oferta', label: 'Oferta', icon: HeartHandshake, color: 'var(--chart-2)' },
-  { to: '/novo/despesa', label: 'Despesa', icon: ShoppingCart, color: 'var(--chart-3)' },
-  { to: '/novo/conta', label: 'Conta a pagar', icon: Receipt, color: 'var(--warning)' },
+  { to: '/novo/despesa', label: 'Pagamento realizado', icon: ShoppingCart, color: 'var(--chart-3)' },
+  { to: '/novo/conta', label: 'Pagamento pendente', icon: Receipt, color: 'var(--warning)' },
 ]
 
 export function TesoureiroHomePage() {
@@ -80,7 +80,7 @@ export function TesoureiroHomePage() {
             <p className="tabular font-display text-lg font-semibold text-[color:var(--chart-3)]">
               {formatBRL(m.sai, { compact: true })}
             </p>
-            <p className="text-[11px] text-muted-foreground">saídas</p>
+            <p className="text-[11px] text-muted-foreground">pagamentos</p>
           </div>
           <div>
             <MoneyText value={m.saldo} colored compact className="font-display text-lg font-semibold" />

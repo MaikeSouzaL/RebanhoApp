@@ -151,7 +151,7 @@ export function DashboardPage() {
           hint="vs. anterior"
         />
         <StatCard
-          label="Saídas"
+          label="Pagamentos"
           value={formatBRL(m.totalSai, { compact: true })}
           icon={ArrowDownCircle}
           iconColor="var(--chart-3)"
@@ -211,7 +211,7 @@ export function DashboardPage() {
       {/* Fluxo de caixa */}
       <Card className="p-5">
         <h2 className="font-display text-base font-semibold">Fluxo de caixa</h2>
-        <p className="text-xs text-muted-foreground">Últimos 6 meses · entradas, saídas e saldo</p>
+        <p className="text-xs text-muted-foreground">Últimos 6 meses · entradas, pagamentos e saldo</p>
         <div className="mt-3">
           <CashflowChart data={m.fluxo} />
         </div>
@@ -222,7 +222,7 @@ export function DashboardPage() {
         <div className="flex items-center justify-between">
           <h2 className="font-display text-base font-semibold">Para onde vai o dinheiro</h2>
           <Link to="/saidas" className="text-xs font-semibold text-primary">
-            Ver gastos
+            Ver pagamentos
           </Link>
         </div>
         <ul className="mt-3 space-y-3">
@@ -247,7 +247,7 @@ export function DashboardPage() {
             )
           })}
           {!m.top.length && (
-            <p className="py-6 text-center text-sm text-muted-foreground">Sem gastos no período.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">Nenhum pagamento no período.</p>
           )}
         </ul>
       </Card>
@@ -287,7 +287,7 @@ export function DashboardPage() {
       {/* Contas a pagar próximas */}
       <Card className="p-5">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-base font-semibold">Contas a pagar</h2>
+          <h2 className="font-display text-base font-semibold">Pagamentos pendentes</h2>
           <Link to="/contas" className="flex items-center text-xs font-semibold text-primary">
             Ver todas <ChevronRight className="size-4" />
           </Link>

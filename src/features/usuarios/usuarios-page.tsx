@@ -45,7 +45,7 @@ const META_PAPEL: Record<Papel, (typeof PAPEIS)[number]> = {
 
 function descricaoPapel(papel: Papel): string {
   if (papel === 'pastor') return 'Vê tudo, edita a igreja e define acessos.'
-  if (papel === 'tesoureiro') return 'Lança entradas, saídas e contas a pagar.'
+  if (papel === 'tesoureiro') return 'Registra entradas, pagamentos realizados e pendentes.'
   return 'Acompanha a prestação de contas e a própria contribuição.'
 }
 

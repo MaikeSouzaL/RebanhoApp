@@ -23,7 +23,7 @@ const FORMAS: FormaPagamento[] = ['pix', 'dinheiro', 'cartao', 'transferencia']
 
 const schema = z.object({
   valor: z.number().positive('Informe um valor maior que zero.'),
-  descricao: z.string().trim().min(2, 'Descreva a despesa.'),
+  descricao: z.string().trim().min(2, 'Descreva o pagamento.'),
 })
 
 export function DespesaFormPage() {
@@ -71,16 +71,16 @@ export function DespesaFormPage() {
     }
     if (editando) updateSaida(existing!.id, payload)
     else addSaida(payload)
-    toast.success(editando ? 'Despesa atualizada!' : 'Despesa registrada!')
+    toast.success(editando ? 'Pagamento atualizado!' : 'Pagamento registrado!')
     navigate('/lancamentos')
   }
 
   return (
     <FormShell
-      title={editando ? 'Editar despesa' : 'Registrar despesa'}
-      subtitle="Um gasto já pago"
+      title={editando ? 'Editar pagamento' : 'Registrar pagamento realizado'}
+      subtitle="Dinheiro que já saiu do caixa"
       onSubmit={salvar}
-      submitLabel={editando ? 'Salvar alterações' : 'Salvar despesa'}
+      submitLabel={editando ? 'Salvar alterações' : 'Salvar pagamento'}
     >
       <Field label="Valor" error={erros.valor} htmlFor="valor">
         <CurrencyInput id="valor" value={valor} onChange={(v) => { setValor(v); setErros((e) => ({ ...e, valor: undefined })) }} autoFocus={!editando} />

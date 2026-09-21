@@ -61,13 +61,13 @@ export function SaidasPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Saídas & Gastos" subtitle="Tudo o que a igreja pagou" action={<PeriodPicker />} />
+      <PageHeader title="Pagamentos realizados" subtitle="Dinheiro que já saiu do caixa da igreja" action={<PeriodPicker />} />
 
       {/* Resumo por categoria */}
       <Card className="p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Total gasto no período</p>
+            <p className="text-sm text-muted-foreground">Total pago no período</p>
             <p className="tabular font-display text-2xl font-semibold text-[color:var(--chart-3)]">
               {formatBRL(sum(filterSaidas(saidas, period)))}
             </p>
@@ -138,7 +138,7 @@ export function SaidasPage() {
           ))}
         </Card>
       ) : (
-        <EmptyState icon={Receipt} title="Sem gastos" description="Nenhuma saída neste filtro." />
+        <EmptyState icon={Receipt} title="Nenhum pagamento" description="Nenhum pagamento realizado neste filtro." />
       )}
     </div>
   )
