@@ -58,10 +58,9 @@ export function LancamentosPage() {
 
   function titulo(r: Row): string {
     if (r.kind === 'entrada') {
-      if (r.item.tipo === 'dizimo')
-        return r.item.membroId
-          ? membroMap.get(r.item.membroId)?.nome ?? 'Dízimo'
-          : r.item.contribuinteNome ?? 'Dízimo'
+      if (r.item.membroId) return membroMap.get(r.item.membroId)?.nome ?? TIPO_ENTRADA_LABEL[r.item.tipo]
+      if (r.item.contribuinteNome) return r.item.contribuinteNome
+      if (r.item.tipo === 'dizimo') return 'Dízimo'
       return r.item.subtipo ?? TIPO_ENTRADA_LABEL[r.item.tipo]
     }
     return r.item.descricao

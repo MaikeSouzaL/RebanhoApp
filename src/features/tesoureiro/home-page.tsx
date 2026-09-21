@@ -193,11 +193,9 @@ export function TesoureiroHomePage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
                   {r.kind === 'entrada'
-                    ? r.item.tipo === 'dizimo'
-                      ? r.item.membroId
-                        ? membros.find((membro) => membro.id === r.item.membroId)?.nome ?? 'Dízimo'
-                        : r.item.contribuinteNome ?? 'Dízimo'
-                      : r.item.subtipo ?? 'Oferta'
+                    ? r.item.membroId
+                      ? membros.find((membro) => membro.id === r.item.membroId)?.nome ?? (r.item.tipo === 'dizimo' ? 'Dízimo' : 'Oferta')
+                      : r.item.contribuinteNome ?? (r.item.tipo === 'dizimo' ? 'Dízimo' : r.item.subtipo ?? 'Oferta')
                     : r.item.descricao}
                 </p>
                 <p className="text-xs text-muted-foreground">{formatDate(r.item.data)}</p>

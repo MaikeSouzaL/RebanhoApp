@@ -31,6 +31,7 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
   const existing = id ? entradas.find((e) => e.id === id) : undefined
   const tipo: TipoEntrada = existing?.tipo ?? tipoProp ?? 'dizimo'
   const isDizimo = tipo === 'dizimo'
+  const aceitaContribuinte = tipo === 'dizimo' || tipo === 'oferta'
   const editando = !!existing
 
   // Fundo padrão real (vem do banco). Nunca usamos um id fixo que pode não
@@ -110,15 +111,15 @@ export function EntradaFormPage({ tipo: tipoProp }: { tipo?: TipoEntrada }) {
       )}
 
       <Field
-        label={isDizimo ? 'Membro ou contribuinte' : 'Membro (opcional)'}
-        hint={isDizimo ? 'Selecione um cadastro ou informe somente o nome.' : 'Deixe como anônimo se não identificado.'}
+        label={aceitaContribuinte ? 'Membro ou contribuinte' : 'Membro (opcional)'}
+        hint={aceitaContribuinte ? 'Selecione um cadastro, informe somente o nome ou registre como anônimo.' : 'Deixe como anônimo se não identificado.'}
       >
         <MemberPicker
           value={membroId}
           onChange={setMembroId}
           customName={contribuinteNome}
           onCustomNameChange={setContribuinteNome}
-          allowCustomName={isDizimo}
+          allowCustomName={aceitaContribuinte}
         />
       </Field>
 
