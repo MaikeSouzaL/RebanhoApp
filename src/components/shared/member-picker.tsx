@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -136,8 +137,11 @@ export function MemberPicker({
         contentClassName="gap-2 overflow-hidden p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         style={viewport ? { bottom: viewport.bottom, maxHeight: viewport.maxHeight } : undefined}
       >
-        <SheetHeader>
+        <SheetHeader className="gap-0.5 pr-10">
           <SheetTitle>Selecionar membro</SheetTitle>
+          <SheetDescription>
+            Busque um cadastro ou informe apenas o nome.
+          </SheetDescription>
         </SheetHeader>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -145,28 +149,24 @@ export function MemberPicker({
             autoFocus
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar membro…"
-            className="pl-9"
+            placeholder="Digite o nome da pessoa"
+            aria-label="Buscar membro ou informar nome"
+            className="h-12 pl-10 text-base shadow-none"
           />
-          {allowCustomName && (
-            <p className="text-xs text-muted-foreground">
-              Não encontrou? Digite o nome completo e use sem criar cadastro.
-            </p>
-          )}
         </div>
-        <div className="-mx-2 shrink-0 border-b border-border/60 pb-1">
+        <div className="shrink-0 space-y-1.5 border-b border-border/60 pb-2">
           {allowCustomName && customNameOption && !hasExactMember && (
             <button
               type="button"
               onClick={chooseCustomName}
-              className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left active:bg-accent"
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-primary/20 bg-primary/[0.06] px-3 py-2 text-left transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 active:bg-primary/12"
             >
-              <span className="flex size-9 items-center justify-center rounded-full bg-primary/12 text-primary">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/12 text-primary">
                 <UserPlus className="size-4" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">Usar “{customNameOption}”</span>
-                <span className="block text-xs text-muted-foreground">Somente neste lançamento</span>
+                <span className="block text-xs text-muted-foreground">Registrar sem criar cadastro</span>
               </span>
               {customName === customNameOption && <Check className="size-4 text-primary" />}
             </button>
@@ -175,23 +175,37 @@ export function MemberPicker({
             <button
               type="button"
               onClick={() => choose(null)}
-              className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left active:bg-accent"
+              className={cn(
+                'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 active:bg-accent',
+                value === null && !customName && 'bg-secondary/70',
+              )}
             >
-              <span className="flex size-9 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
                 <UserRound className="size-4" />
               </span>
-              <span className="flex-1 text-sm font-medium">Anônimo / não identificado</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">Registrar como anônimo</span>
+                <span className="block text-xs text-muted-foreground">Quando a pessoa não se identificar</span>
+              </span>
               {value === null && !customName && <Check className="size-4 text-primary" />}
             </button>
           )}
         </div>
         <div className="-mx-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pt-1">
+          <p className="sticky top-0 z-10 bg-card px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Membros cadastrados
+          </p>
+          {lista.length === 0 && (
+            <p className="px-2 py-5 text-center text-sm text-muted-foreground">
+              Nenhum membro encontrado com esse nome.
+            </p>
+          )}
           {lista.map((m) => (
             <button
               key={m.id}
               type="button"
               onClick={() => choose(m.id)}
-              className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left active:bg-accent"
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/35 active:bg-accent"
             >
               <Avatar className="size-9">
                 <AvatarFallback className="text-[11px]">{initials(m.nome)}</AvatarFallback>
