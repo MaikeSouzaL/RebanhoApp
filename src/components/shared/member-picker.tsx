@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Check, ChevronDown, Search, UserPlus, UserRound } from 'lucide-react'
 import { useData } from '@/store/data'
 import { initials } from '@/lib/format'
@@ -33,6 +33,37 @@ export function MemberPicker({
   const { membros } = useData()
   const [open, setOpen] = useState(false)
   const [busca, setBusca] = useState('')
+  const [viewport, setViewport] = useState<{ bottom: number; maxHeight: number }>()
+
+  // Em alguns navegadores mobile o teclado cobre elementos `position: fixed`
+  // sem atualizar corretamente o `dvh`. VisualViewport informa a área que
+  // continua realmente visível e permite manter o modal acima do teclado.
+  useEffect(() => {
+    if (!open || !window.visualViewport) {
+      setViewport(undefined)
+      return
+    }
+
+    const visualViewport = window.visualViewport
+    const updateViewport = () => {
+      const bottom = Math.max(
+        0,
+        window.innerHeight - visualViewport.height - visualViewport.offsetTop,
+      )
+      setViewport({
+        bottom,
+        maxHeight: Math.max(0, Math.min(window.innerHeight * 0.8, visualViewport.height - 8)),
+      })
+    }
+
+    updateViewport()
+    visualViewport.addEventListener('resize', updateViewport)
+    visualViewport.addEventListener('scroll', updateViewport)
+    return () => {
+      visualViewport.removeEventListener('resize', updateViewport)
+      visualViewport.removeEventListener('scroll', updateViewport)
+    }
+  }, [open])
 
   const selecionado = value ? membros.find((m) => m.id === value) : null
   const lista = useMemo(() => {
@@ -99,7 +130,12 @@ export function MemberPicker({
           <ChevronDown className="size-4 opacity-60" />
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="max-h-[80dvh]">
+      <SheetContent
+        side="bottom"
+        className="max-h-[80dvh]"
+        contentClassName="gap-2 overflow-hidden p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        style={viewport ? { bottom: viewport.bottom, maxHeight: viewport.maxHeight } : undefined}
+      >
         <SheetHeader>
           <SheetTitle>Selecionar membro</SheetTitle>
         </SheetHeader>
@@ -118,7 +154,7 @@ export function MemberPicker({
             </p>
           )}
         </div>
-        <div className="-mx-2 overflow-y-auto">
+        <div className="-mx-2 shrink-0 border-b border-border/60 pb-1">
           {allowCustomName && customNameOption && !hasExactMember && (
             <button
               type="button"
@@ -148,6 +184,8 @@ export function MemberPicker({
               {value === null && !customName && <Check className="size-4 text-primary" />}
             </button>
           )}
+        </div>
+        <div className="-mx-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pt-1">
           {lista.map((m) => (
             <button
               key={m.id}

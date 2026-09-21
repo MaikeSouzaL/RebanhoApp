@@ -11,11 +11,16 @@ type Side = 'top' | 'bottom' | 'left' | 'right'
 
 function SheetContent({
   className,
+  contentClassName,
   children,
   side = 'bottom',
   showClose = true,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & { side?: Side; showClose?: boolean }) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  side?: Side
+  showClose?: boolean
+  contentClassName?: string
+}) {
   // `max-h` + rolagem interna: sem isso, um menu mais alto que a tela fica com
   // o topo cortado e sem como alcançar os últimos itens.
   const sideClasses: Record<Side, string> = {
@@ -41,7 +46,12 @@ function SheetContent({
           <div className="mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-border" aria-hidden />
         )}
         {/* Só esta região rola; a alça (acima) e o "X" (abaixo) ficam fixos. */}
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div
+          className={cn(
+            'flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]',
+            contentClassName,
+          )}
+        >
           {children}
         </div>
         {showClose && (
